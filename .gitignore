@@ -22,5 +22,6 @@ db.sqlite3
 .claude/
 
 # Arquivos avulsos na raiz, não fazem parte do código-fonte
+README.md
 README.zip
 Captura de tela*.png
