@@ -1,0 +1,24 @@
+# ÁQUILA - Traduções pt-BR
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pt_BR\n"
+
+msgid "You have been successfully logged out from the administration"
+msgstr "Logout realizado com sucesso..."
+
+msgid "Thanks for spending some quality time with the web site today."
+msgstr "Obrigado por utilizar o sistema ÁQUILA."
+
+msgid "Log in again"
+msgstr "Entrar novamente"
+
+msgid "No results found"
+msgstr "Nenhum resultado encontrado"
+
+msgid "This page yielded into no results. Create a new item or reset your filters."
+msgstr "Esta página não retornou resultados. Crie um novo item ou redefina seus filtros."
+
+msgid "Choose file to upload"
+msgstr "Selecionar arquivo"

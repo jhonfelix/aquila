@@ -1,0 +1,167 @@
+{% load admin_urls i18n unfold crispy_forms_tags %}
+
+{% with fake_tab=inline_admin_formset.opts.fake_tab is_owner=inline_admin_formset.opts.is_grid_owner grid_id=inline_admin_formset.opts.grid_slot_id %}
+
+{% if is_owner %}
+{# ── DONO: cria o wrapper grid e reserva slots para os convidados ── #}
+<div id="grid-inline-wrapper-{{ grid_id }}"
+     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+     x-show="{% if fake_tab %}activeTab == '{{ fake_tab|slugify }}'{% elif inline_admin_formset.opts.tab %}activeTab == '{{ inline_admin_formset.formset.prefix|slugify }}'{% else %}activeTab == 'general'{% endif %}">
+
+    {# Coluna do dono #}
+    <div class="js-inline-admin-formset inline-group border border-base-200 rounded-default dark:border-base-800"
+         id="{{ inline_admin_formset.formset.prefix }}-group"
+         data-inline-type="stacked"
+         data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+        <fieldset class="module relative {{ inline_admin_formset.classes }}" aria-labelledby="{{ inline_admin_formset.formset.prefix }}-heading">
+            <h2 class="bg-base-100 flex flex-row font-semibold h-[38px] items-center mb-4 px-3 rounded-default text-important dark:bg-white/[.02]"
+                id="{{ inline_admin_formset.formset.prefix }}-heading">
+                {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}
+            </h2>
+
+            {{ inline_admin_formset.formset.management_form }}
+            {% include "unfold/helpers/messages/error.html" with errors=inline_admin_formset.formset.non_form_errors %}
+
+            <div class="overflow-hidden w-full">
+                {% for inline_admin_form in inline_admin_formset %}
+                    <div class="inline-related group inline-stacked {% if inline_admin_form.original or inline_admin_form.show_url %}has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form last-related{% endif %}"
+                         id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+
+                        {% if not inline_admin_formset.opts.hide_title or inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission %}
+                            <h3 class="border-b border-base-200 flex font-medium items-center gap-2 px-3 py-2 text-sm dark:border-base-800">
+                                {{ inline_admin_formset.opts.verbose_name|capfirst }}:
+                                <span class="inline_label font-semibold text-font-important-light dark:text-font-important-dark">
+                                    {% if inline_admin_form.original %}{{ inline_admin_form.original }}{% else %}#{{ forloop.counter }}{% endif %}
+                                </span>
+                                {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission and inline_admin_form.original %}
+                                    <span class="delete flex gap-2 items-center ml-auto">
+                                        {{ inline_admin_form.deletion_field.field|add_css_class:form_classes.checkbox }} {{ inline_admin_form.deletion_field.label_tag }}
+                                    </span>
+                                {% endif %}
+                            </h3>
+                        {% endif %}
+
+                        {% include "unfold/helpers/messages/error.html" with errors=inline_admin_form.form.non_field_errors %}
+
+                        <div class="p-4 flex flex-col gap-4">
+                            {% if inline_admin_form.form.helper %}
+                                {% crispy inline_admin_form.form %}
+                            {% else %}
+                                {% for fieldset in inline_admin_form %}
+                                    {% include 'admin/includes/fieldset.html' with stacked=1 %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
+                        {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% include "unfold/helpers/pagination_inline.html" %}
+        </fieldset>
+    </div>
+
+    {# Slots reservados para os convidados — o JS os preenche por ordem de chegada #}
+    <div class="grid-inline-slot" data-grid="{{ grid_id }}"></div>
+    <div class="grid-inline-slot" data-grid="{{ grid_id }}"></div>
+
+</div>
+
+<script>
+(function () {
+    var GRID_ID = '{{ grid_id }}';
+
+    function moveGuests() {
+        var wrapper = document.getElementById('grid-inline-wrapper-' + GRID_ID);
+        if (!wrapper) return;
+
+        var slots = wrapper.querySelectorAll('.grid-inline-slot[data-grid="' + GRID_ID + '"]');
+        var guests = document.querySelectorAll(
+            '[data-grid-guest="' + GRID_ID + '"]:not(#grid-inline-wrapper-' + GRID_ID + ' *)'
+        );
+
+        var slotIndex = 0;
+        guests.forEach(function (guest) {
+            if (slotIndex >= slots.length) return;
+            guest.removeAttribute('x-show');
+            guest.style.removeProperty('display');
+            slots[slotIndex].replaceWith(guest);
+            slotIndex++;
+        });
+
+        // Remove slots não utilizados
+        wrapper.querySelectorAll('.grid-inline-slot[data-grid="' + GRID_ID + '"]').forEach(function (s) {
+            s.remove();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', moveGuests);
+    } else {
+        moveGuests();
+    }
+})();
+</script>
+
+{% else %}
+{# ── CONVIDADO: renderiza o conteúdo — o JS do dono o moverá para o grid ── #}
+<div class="js-inline-admin-formset inline-group border border-base-200 rounded-default dark:border-base-800"
+     id="{{ inline_admin_formset.formset.prefix }}-group"
+     data-inline-type="stacked"
+     data-inline-formset="{{ inline_admin_formset.inline_formset_data }}"
+     data-grid-guest="{{ grid_id }}"
+     x-show="{% if fake_tab %}activeTab == '{{ fake_tab|slugify }}'{% elif inline_admin_formset.opts.tab %}activeTab == '{{ inline_admin_formset.formset.prefix|slugify }}'{% else %}activeTab == 'general'{% endif %}">
+    <fieldset class="module relative {{ inline_admin_formset.classes }}" aria-labelledby="{{ inline_admin_formset.formset.prefix }}-heading">
+        <h2 class="bg-base-100 flex flex-row font-semibold h-[38px] items-center mb-4 px-3 rounded-default text-important dark:bg-white/[.02]"
+            id="{{ inline_admin_formset.formset.prefix }}-heading">
+            {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}
+        </h2>
+
+        {{ inline_admin_formset.formset.management_form }}
+        {% include "unfold/helpers/messages/error.html" with errors=inline_admin_formset.formset.non_form_errors %}
+
+        <div class="overflow-hidden w-full">
+            {% for inline_admin_form in inline_admin_formset %}
+                <div class="inline-related group inline-stacked {% if inline_admin_form.original or inline_admin_form.show_url %}has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form last-related{% endif %}"
+                     id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+
+                    {% if not inline_admin_formset.opts.hide_title or inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission %}
+                        <h3 class="border-b border-base-200 flex font-medium items-center gap-2 px-3 py-2 text-sm dark:border-base-800">
+                            {{ inline_admin_formset.opts.verbose_name|capfirst }}:
+                            <span class="inline_label font-semibold text-font-important-light dark:text-font-important-dark">
+                                {% if inline_admin_form.original %}{{ inline_admin_form.original }}{% else %}#{{ forloop.counter }}{% endif %}
+                            </span>
+                            {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission and inline_admin_form.original %}
+                                <span class="delete flex gap-2 items-center ml-auto">
+                                    {{ inline_admin_form.deletion_field.field|add_css_class:form_classes.checkbox }} {{ inline_admin_form.deletion_field.label_tag }}
+                                </span>
+                            {% endif %}
+                        </h3>
+                    {% endif %}
+
+                    {% include "unfold/helpers/messages/error.html" with errors=inline_admin_form.form.non_field_errors %}
+
+                    <div class="p-4 flex flex-col gap-4">
+                        {% if inline_admin_form.form.helper %}
+                            {% crispy inline_admin_form.form %}
+                        {% else %}
+                            {% for fieldset in inline_admin_form %}
+                                {% include 'admin/includes/fieldset.html' with stacked=1 %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
+                    {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% include "unfold/helpers/pagination_inline.html" %}
+    </fieldset>
+</div>
+{% endif %}
+
+{% endwith %}

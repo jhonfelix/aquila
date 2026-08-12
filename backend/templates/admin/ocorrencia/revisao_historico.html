@@ -1,0 +1,114 @@
+{% extends 'admin/base.html' %}
+{% load i18n unfold %}
+
+{% block title %}Histórico de Revisões | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="mb-6">
+  <ul class="flex items-center gap-1.5 text-sm text-base-500 dark:text-base-400">
+    <li><a href="{% url 'admin:index' %}" class="hover:text-primary-600 no-underline">Início</a></li>
+    <li><span class="material-symbols-outlined" style="font-size:14px">chevron_right</span></li>
+    <li><a href="{% url 'admin:ocorrencia_ocorrenciarevisaorelatorio_changelist' %}" class="hover:text-primary-600 no-underline">Painel de Revisão RF</a></li>
+    <li><span class="material-symbols-outlined" style="font-size:14px">chevron_right</span></li>
+    <li class="text-base-800 dark:text-base-200 font-medium">Histórico de Revisões</li>
+  </ul>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-semibold text-base-900 dark:text-base-100">Histórico de Revisões</h1>
+    <p class="text-sm text-base-500 dark:text-base-400 mt-0.5">{{ subtitle }}</p>
+  </div>
+  <a href="{{ url_add }}"
+     class="inline-flex items-center gap-2 rounded px-4 py-2 text-sm font-medium
+            bg-primary-600 text-white border border-primary-700
+            hover:bg-primary-700 transition-colors no-underline">
+    <span class="material-symbols-outlined" style="font-size:18px">add</span>
+    Nova Revisão
+  </a>
+</div>
+
+{% if revisoes %}
+<div class="bg-white dark:bg-base-800 border border-base-200 dark:border-base-700 rounded-default overflow-hidden">
+  <table class="w-full text-sm" style="table-layout:fixed">
+    <colgroup>
+      <col style="width:80px">
+      <col style="width:120px">
+      <col style="width:220px">
+      <col style="width:160px">
+      <col><!-- observacao: ocupa o restante -->
+      <col style="width:90px">
+      <col style="width:48px">
+    </colgroup>
+    <thead>
+      <tr class="border-b border-base-200 dark:border-base-700 bg-base-50 dark:bg-base-900">
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">#</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Data de Atribuição</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Setor</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Revisor</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Observação</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Anexo</th>
+        <th class="px-4 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-base-100 dark:divide-base-700">
+      {% for r in revisoes %}
+      <tr class="hover:bg-base-50 dark:hover:bg-base-700/50 transition-colors {% if forloop.first %}bg-primary-50/40 dark:bg-primary-900/10{% endif %}">
+        <td class="px-4 py-3 text-base-500 dark:text-base-400 font-mono text-xs">
+          {{ r.id }}
+          {% if forloop.first %}
+          <span class="ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
+                style="background:#dcfce7;color:#15803d">atual</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-base-800 dark:text-base-400 hover:text-primary-700">
+          {{ r.data_atribuicao|date:"d/m/Y"|default:"-" }}
+        </td>
+        <td class="px-4 py-3 text-base-800 dark:text-base-400 hover:text-primary-700">
+          {{ r.get_setor_display|default:"-" }}
+        </td>
+        <td class="px-4 py-3 text-base-800 dark:text-base-400 hover:text-primary-700">
+          {{ r.revisor|default:"-" }}
+        </td>
+        <td class="px-4 py-3 text-base-600 dark:text-base-400 hover:text-primary-700">
+          {{ r.observacao|default:"-" }}
+        </td>
+        <td class="px-4 py-3">
+          {% if r.anexo %}
+          <a href="{{ r.anexo.url }}" target="_blank"
+             class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 no-underline text-xs">
+            <span class="material-symbols-outlined" style="font-size:17px">download</span>
+            Baixar
+          </a>
+          {% else %}
+          <span class="text-base-400">-</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-center">
+          <a href="{% url 'admin:ocorrencia_ocorrenciarevisaorelatorio_change' r.pk %}"
+             class="inline-flex items-center gap-1 text-base-500 hover:text-primary-600 no-underline text-xs transition-colors">
+            <span class="material-symbols-outlined" style="font-size:17px">edit</span>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="flex flex-col items-center justify-center py-16 text-base-400 dark:text-base-500">
+  <span class="material-symbols-outlined mb-3" style="font-size:48px">inbox</span>
+  <p class="text-sm">Nenhuma revisão encontrada para esta ocorrência.</p>
+</div>
+{% endif %}
+
+<div class="mt-6">
+  <a href="{% url 'admin:ocorrencia_ocorrenciarevisaorelatorio_changelist' %}"
+     class="inline-flex items-center gap-1.5 text-sm text-base-500 hover:text-primary-600 no-underline transition-colors">
+    <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>
+    Voltar ao Painel de Revisão RF
+  </a>
+</div>
+{% endblock %}

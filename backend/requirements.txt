@@ -1,0 +1,17 @@
+Django==5.2
+gunicorn
+djangorestframework
+django-filter
+drf-spectacular
+django-unfold==0.75.0
+django-rangefilter
+mysqlclient>=2.2.0
+django-import-export
+django-constance
+django-nested-admin
+django-auditlog
+django-crispy-forms
+crispy-bootstrap5
+pyotp
+qrcode[pil]
+Pillow

@@ -1,0 +1,29 @@
+{% extends 'unfold/layouts/unauthenticated.html' %}
+{% load i18n unfold %}
+
+{% block title %}Desativar 2FA | {{ site_title }}{% endblock %}
+
+{% block content %}
+{% include "unfold/helpers/unauthenticated_title.html" with title="Desativar Dois Fatores" subtitle="Segurança da conta" %}
+
+<p class="text-sm text-font-subtle-light dark:text-font-subtle-dark mb-6">
+    Ao desativar o 2FA, seu acesso será protegido apenas por senha. Tem certeza que deseja continuar?
+</p>
+
+<div class="border border-red-200 bg-red-50 dark:bg-red-500/10 dark:border-red-500/20 rounded-default px-4 py-3 mb-8 text-sm text-red-700 dark:text-red-400">
+    ⚠ Esta ação removerá o segundo fator de autenticação da sua conta.
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="flex flex-col gap-3">
+        {% component "unfold/components/button.html" with submit=1 variant="danger" class="w-full" %}
+            Desativar 2FA
+        {% endcomponent %}
+
+        {% component "unfold/components/button.html" with href="/" variant="secondary" class="w-full" %}
+            Cancelar
+        {% endcomponent %}
+    </div>
+</form>
+{% endblock %}

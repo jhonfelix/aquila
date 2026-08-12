@@ -1,0 +1,63 @@
+{% load i18n %}
+{% if entries %}
+<div class="bg-white dark:bg-base-800 border border-base-200 dark:border-base-700 rounded-default overflow-hidden mb-6">
+  <table class="w-full text-sm" style="table-layout:fixed">
+    <colgroup>
+      <col style="width:150px">
+      <col style="width:160px">
+      <col style="width:90px">
+      <col>
+    </colgroup>
+    <thead>
+      <tr class="border-b border-base-200 dark:border-base-700 bg-base-50 dark:bg-base-900">
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">{% translate "Date/time" %}</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">{% translate "User" %}</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Ação</th>
+        <th class="text-left px-4 py-3 font-medium text-base-600 dark:text-base-400">Alterações</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-base-100 dark:divide-base-700">
+      {% for entry in entries %}
+      <tr class="hover:bg-base-50 dark:hover:bg-base-700/50 transition-colors align-top">
+        <td class="px-4 py-3 whitespace-nowrap text-base-600 dark:text-base-400 text-xs">
+          {{ entry.timestamp|date:"d/m/Y H:i:s" }}
+        </td>
+        <td class="px-4 py-3 text-base-700 dark:text-base-300 text-xs">
+          {{ entry.actor|default:"Sistema" }}
+        </td>
+        <td class="px-4 py-3">
+          {% if entry.action == 0 %}
+            <span style="display:inline-flex;align-items:center;border-radius:4px;padding:2px 8px;font-size:0.7rem;font-weight:500;background:#dcfce7;color:#15803d">Criação</span>
+          {% elif entry.action == 1 %}
+            <span style="display:inline-flex;align-items:center;border-radius:4px;padding:2px 8px;font-size:0.7rem;font-weight:500;background:#dbeafe;color:#1d4ed8">Edição</span>
+          {% elif entry.action == 2 %}
+            <span style="display:inline-flex;align-items:center;border-radius:4px;padding:2px 8px;font-size:0.7rem;font-weight:500;background:#fee2e2;color:#b91c1c">Exclusão</span>
+          {% else %}
+            <span style="display:inline-flex;align-items:center;border-radius:4px;padding:2px 8px;font-size:0.7rem;font-weight:500;background:#f3f4f6;color:#374151">Acesso</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if entry.changes %}
+            <div class="space-y-1">
+              {% for field, values in entry.changes.items %}
+              <div class="text-xs">
+                <span class="font-medium text-base-700 dark:text-base-300">{{ field }}</span>
+                <span class="mx-1 text-base-400">:</span>
+                <span class="text-red-600 dark:text-red-400 line-through">{{ values.0|default:"(vazio)" }}</span>
+                <span class="mx-1 text-base-400">→</span>
+                <span class="text-green-700 dark:text-green-400">{{ values.1|default:"(vazio)" }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <span class="text-base-400 text-xs">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-base-400 text-xs italic">Nenhum registro de alteração.</p>
+{% endif %}

@@ -1,0 +1,13 @@
+/* Subitens do menu lateral: fonte menor e recuo maior */
+
+/* Links dos subitens — todos os grupos */
+#nav-sidebar-apps ol a {
+    font-size: 0.78rem;
+    padding-left: 0.25rem;
+    padding: 15px;
+}
+
+/* Recuo somente a partir do segundo grupo */
+.nav-group-indented ol {
+    margin-left: 1.75rem;
+}

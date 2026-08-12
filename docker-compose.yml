@@ -1,0 +1,68 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - orion_net
+
+  web:
+    build:
+      context: ./backend
+    restart: always
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    networks:
+      - orion_net
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    depends_on:
+      - web
+    networks:
+      - orion_net
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    depends_on:
+      - web
+      - frontend
+    networks:
+      - orion_net
+
+  portainer:
+    image: portainer/portainer-ce
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+volumes:
+  portainer_data:
+  static_files:
+  media_files:
+
+networks:
+  orion_net:
