@@ -266,6 +266,8 @@ export type MaterialApoio = {
   divisao_responsavel: string | null;
   setor_responsavel: string | null;
   pessoa_responsavel: number | null;
+  pessoa_responsavel_display: string | null;
+  tipo_documento_display: string | null;
   data_emissao: string | null;
   data_efetivacao: string | null;
   data_aprovacao: string | null;

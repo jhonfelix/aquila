@@ -2,6 +2,7 @@
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { MATERIAL_TIPO_DOCUMENTO_CHOICES } from '@/lib/choices';
+import { formatUsuario } from '@/lib/format';
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
@@ -14,7 +15,7 @@ const FIELDS: FieldConfig[] = [
     label: 'Pessoa Responsável',
     type: 'async-fk',
     fkApiPath: '/api/usuarios/',
-    fkLabel: (i) => i.nome_guerra || i.nome,
+    fkLabel: (i) => formatUsuario(i),
   },
   { name: 'data_emissao', label: 'Data da Emissão', type: 'date' },
   { name: 'data_publicacao', label: 'Data da Publicação', type: 'date' },

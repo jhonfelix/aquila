@@ -75,7 +75,7 @@ class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'nome', 'nome_guerra', 'posto_graduacao',
+            'id', 'email', 'nome', 'nome_guerra', 'posto_graduacao', 'local_trabalho',
             'is_staff', 'is_superuser', 'totp_enabled', 'totp_obrigatorio',
             'groups', 'permissions',
         ]

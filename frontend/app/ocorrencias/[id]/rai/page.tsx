@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, History, Plus, Save, Trash2 } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { formatUsuario, formatShortDate } from '@/lib/format';
 import type {
   OcorrenciaGeral,
   OcorrenciaAeronave,
@@ -35,7 +36,7 @@ import {
   COMISSAO_FUNCAO_CHOICES,
 } from '@/lib/choices';
 
-const userLabel = (u: Usuario) => u.nome_guerra || u.nome;
+const userLabel = (u: Usuario) => formatUsuario(u);
 
 type FieldCfg = {
   name: string;
@@ -236,9 +237,9 @@ function GeralReadOnlyBlock({ oc }: { oc: OcorrenciaGeral }) {
     <div className="mb-5 grid grid-cols-2 gap-4 rounded-lg border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-800/30 sm:grid-cols-4">
       <ReadOnlyRow label="Nº Processo" value={oc.numero_processo} />
       <ReadOnlyRow label="Classificação" value={oc.classificacao} />
-      <ReadOnlyRow label="Data" value={oc.dia} />
+      <ReadOnlyRow label="Data" value={oc.dia ? formatShortDate(oc.dia) : null} />
       <ReadOnlyRow label="Hora Local" value={oc.horario} />
-      <ReadOnlyRow label="Data UTC" value={oc.dia_utc} />
+      <ReadOnlyRow label="Data UTC" value={oc.dia_utc ? formatShortDate(oc.dia_utc) : null} />
       <ReadOnlyRow label="Hora UTC" value={oc.horario_utc} />
       <ReadOnlyRow label="Local" value={oc.local} />
     </div>
@@ -707,6 +708,7 @@ function ComissaoSection({ ocorrenciaId, setError }: { ocorrenciaId: number; set
   const [membros, setMembros] = useState<OcorrenciaComissao[]>([]);
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [saving, setSaving] = useState<number | null>(null);
+  const [investigadores, setInvestigadores] = useState<Record<number, Usuario>>({});
 
   const load = useCallback(() => {
     apiFetch<Paginated<OcorrenciaComissao>>(`/api/ocorrencia/comissao/?ocorrencia=${ocorrenciaId}`).then((data) => setMembros(data.results));
@@ -715,6 +717,27 @@ function ComissaoSection({ ocorrenciaId, setError }: { ocorrenciaId: number; set
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const missing = Array.from(
+      new Set(membros.map((m) => m.investigador).filter((id): id is number => id != null && !(id in investigadores))),
+    );
+    if (missing.length === 0) return;
+    Promise.all(
+      missing.map((id) =>
+        apiFetch<Usuario>(`/api/usuarios/${id}/`)
+          .then((u) => [id, u] as const)
+          .catch(() => null),
+      ),
+    ).then((pairs) => {
+      setInvestigadores((prev) => {
+        const next = { ...prev };
+        for (const p of pairs) if (p) next[p[0]] = p[1];
+        return next;
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membros]);
 
   async function handleSaveIdentificacao(id: number) {
     setError(null);
@@ -746,7 +769,9 @@ function ComissaoSection({ ocorrenciaId, setError }: { ocorrenciaId: number; set
       {membros.map((m) => (
         <div key={m.id} className="flex flex-wrap items-center gap-3 border-b border-stone-100 py-3 text-sm last:border-0 dark:border-stone-800">
           <div className="min-w-[180px] flex-1">
-            <p className="font-medium text-stone-800 dark:text-stone-200">Membro #{m.investigador ?? '-'}</p>
+            <p className="font-medium text-stone-800 dark:text-stone-200">
+              {m.investigador && investigadores[m.investigador] ? formatUsuario(investigadores[m.investigador]) : `Membro #${m.investigador ?? '-'}`}
+            </p>
             <p className="text-xs text-stone-400 dark:text-stone-500">{COMISSAO_FUNCAO_CHOICES.find(([v]) => v === m.funcao)?.[1] || m.funcao || '-'}</p>
           </div>
           <div className="flex items-center gap-2">

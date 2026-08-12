@@ -7,6 +7,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { CheckCircle2, ChevronDown, Download, FileText, Pencil, Upload, XCircle } from 'lucide-react';
 import { apiFetch, fetchMe } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { formatShortDate } from '@/lib/format';
 import type { OcorrenciaGeral, Paginated, RevisaoPainelArtefato } from '@/lib/types';
 import AppShell from '@/components/AppShell';
 import { Badge, PageContainer, Spinner, buttonClass } from '@/lib/ui';
@@ -255,7 +256,7 @@ export default function OcorrenciasListPage() {
                     </td>
                     <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.classificacao || '-'}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-stone-700 dark:text-stone-300">
-                      {oc.dia || '-'}
+                      {oc.dia ? formatShortDate(oc.dia) : '-'}
                       <br />
                       <span className="text-xs text-stone-400 dark:text-stone-500">{oc.horario || '-'}</span>
                     </td>

@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceListPage from '@/components/crud/ResourceListPage';
+import { MATERIAL_APOIO_COLUMNS } from '@/lib/materialApoioColumns';
 
 export default function FormulariosListPage() {
   return (
@@ -11,11 +12,7 @@ export default function FormulariosListPage() {
       createHref="/material-apoio/formularios/nova"
       createLabel="Novo Formulário"
       rowHref={(item) => `/material-apoio/formularios/${item.id}`}
-      columns={[
-        { key: 'titulo', label: 'Título' },
-        { key: 'numero_norma', label: 'Número' },
-        { key: 'data_publicacao', label: 'Publicação' },
-      ]}
+      columns={MATERIAL_APOIO_COLUMNS}
     />
   );
 }

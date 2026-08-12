@@ -6,6 +6,7 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { ChevronDown, Download, History, Trash2, Upload } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { formatUsuario, formatShortDate } from '@/lib/format';
 import type {
   OcorrenciaGeral,
   OcorrenciaAeronave,
@@ -59,7 +60,7 @@ type Tab = (typeof TABS)[number];
 const tabTriggerClass =
   'border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-stone-500 outline-none transition-colors hover:text-stone-800 data-[state=active]:border-accent-600 data-[state=active]:text-accent-700 dark:text-stone-400 dark:hover:text-stone-200 dark:data-[state=active]:text-accent-400';
 
-const userLabel = (u: Usuario) => u.nome_guerra || u.nome;
+const userLabel = (u: Usuario) => formatUsuario(u);
 
 export default function OcorrenciaDetailPage() {
   const params = useParams();
@@ -345,8 +346,8 @@ function GeralTab({
 
       <SectionCard title="Cadastro" subtitle="Informações sobre quem e quando cadastrou a ocorrência">
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-          <ReadOnlyField label="Cadastrado por" value={cadastradoPor ? cadastradoPor.nome_guerra || cadastradoPor.nome : `#${oc.cadastrado_por_id}`} />
-          <ReadOnlyField label="Cadastrado em" value={oc.cadastrado_em} />
+          <ReadOnlyField label="Cadastrado por" value={cadastradoPor ? formatUsuario(cadastradoPor) : `#${oc.cadastrado_por_id}`} />
+          <ReadOnlyField label="Cadastrado em" value={oc.cadastrado_em ? formatShortDate(oc.cadastrado_em) : null} />
         </div>
       </SectionCard>
 
@@ -704,10 +705,13 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
     <form onSubmit={handleSave}>
       <SectionCard title="Informações de Apoio">
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-          <ReadOnlyField label="Confirmado por" value={confirmadoPor ? confirmadoPor.nome_guerra || confirmadoPor.nome : '-'} />
-          <ReadOnlyField label="Data da confirmação" value={confirmacao?.data_confirmacao} />
-          <ReadOnlyField label="Autenticado por" value={autenticadoPor ? autenticadoPor.nome_guerra || autenticadoPor.nome : '-'} />
-          <ReadOnlyField label="Data da autenticação" value={autenticacao?.data_autenticacao} />
+          <ReadOnlyField label="Confirmado por" value={confirmadoPor ? formatUsuario(confirmadoPor) : '-'} />
+          <ReadOnlyField label="Data da confirmação" value={confirmacao?.data_confirmacao ? formatShortDate(confirmacao.data_confirmacao) : null} />
+          <ReadOnlyField label="Autenticado por" value={autenticadoPor ? formatUsuario(autenticadoPor) : '-'} />
+          <ReadOnlyField
+            label="Data da autenticação"
+            value={autenticacao?.data_autenticacao ? formatShortDate(autenticacao.data_autenticacao) : null}
+          />
         </div>
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
           <Field label="Tratamento da Ocorrência">
@@ -754,7 +758,7 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
             onChange={(e) => set('observacoes', e.target.value)}
           />
         </Field>
-        {controle && <ReadOnlyField label="Cadastrado em" value={controle.cadastrado_em} />}
+        {controle && <ReadOnlyField label="Cadastrado em" value={controle.cadastrado_em ? formatShortDate(controle.cadastrado_em) : null} />}
       </SectionCard>
 
       <Button type="submit" disabled={saving}>
@@ -887,7 +891,7 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
           return (
             <div key={m.id} className="flex items-center justify-between border-b border-stone-100 py-2.5 text-sm last:border-0 dark:border-stone-800">
               <div className="min-w-0">
-                <p className="truncate font-medium text-stone-800 dark:text-stone-200">{inv ? inv.nome_guerra || inv.nome : `Investigador #${m.investigador}`}</p>
+                <p className="truncate font-medium text-stone-800 dark:text-stone-200">{inv ? formatUsuario(inv) : `Investigador #${m.investigador}`}</p>
                 <p className="truncate text-xs text-stone-400 dark:text-stone-500">
                   {COMISSAO_FUNCAO_CHOICES.find(([v]) => v === m.funcao)?.[1] || m.funcao || '-'}
                   {m.observacoes ? ` · ${m.observacoes}` : ''}
@@ -1018,7 +1022,7 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
                   {TIPO_DOCUMENTO_CHOICES.find(([v]) => v === d.tipo_documento)?.[1] || d.tipo_documento || 'Documento'}
                 </p>
                 <p className="truncate text-xs text-stone-400 dark:text-stone-500">
-                  {uploader ? uploader.nome_guerra || uploader.nome : '-'} {d.cadastrado_em ? `· ${d.cadastrado_em}` : ''}
+                  {uploader ? formatUsuario(uploader) : '-'} {d.cadastrado_em ? `· ${formatShortDate(d.cadastrado_em)}` : ''}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
@@ -1381,7 +1385,7 @@ function RevisaoRelatorioTab({ ocorrenciaId, setError }: { ocorrenciaId: number;
                 {REVISAO_SETOR_CHOICES.find(([v]) => v === r.setor)?.[1] || r.setor || 'Etapa'}
               </p>
               <p className="truncate text-xs text-stone-400 dark:text-stone-500">
-                {r.data_atribuicao || '-'} {r.observacao ? `· ${r.observacao}` : ''}
+                {r.data_atribuicao ? formatShortDate(r.data_atribuicao) : '-'} {r.observacao ? `· ${r.observacao}` : ''}
               </p>
             </div>
             <div className="ml-3 flex shrink-0 items-center gap-2">

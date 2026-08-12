@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { apiFetch, fetchMe, type Me } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { formatUsuario } from '@/lib/format';
 import OcorrenciaSearch from './OcorrenciaSearch';
 import ThemeToggle from './ThemeToggle';
 
@@ -229,7 +230,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && (
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-white">{me?.nome_guerra || me?.nome || '…'}</span>
+              <span className="block truncate text-sm font-medium text-white">{me ? formatUsuario(me) : '…'}</span>
               <span className="block truncate text-xs text-slate-400">{me?.email}</span>
             </span>
           )}

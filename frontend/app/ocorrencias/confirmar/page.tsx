@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { formatShortDate } from '@/lib/format';
 import type { OcorrenciaGeral, Paginated } from '@/lib/types';
 import AppShell from '@/components/AppShell';
 import { Badge, Button, ErrorText, PageContainer, Spinner } from '@/lib/ui';
@@ -100,7 +101,7 @@ export default function ConfirmarOcorrenciasPage() {
                     </td>
                     <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.classificacao || '-'}</td>
                     <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.tipo || '-'}</td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.dia || '-'}</td>
+                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.dia ? formatShortDate(oc.dia) : '-'}</td>
                     <td className="px-4 py-3">
                       <Badge tone="warning">{oc.status}</Badge>
                     </td>

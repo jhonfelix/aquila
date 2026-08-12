@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceListPage from '@/components/crud/ResourceListPage';
+import { formatShortDate } from '@/lib/format';
 
 export default function OutrasAutoridadesListPage() {
   return (
@@ -14,7 +15,7 @@ export default function OutrasAutoridadesListPage() {
         { key: 'titulo', label: 'Título' },
         { key: 'pais', label: 'País' },
         { key: 'autoridade_investigadora', label: 'Autoridade' },
-        { key: 'data_ocorrencia', label: 'Data' },
+        { key: 'data_ocorrencia', label: 'Data', render: (item) => (item.data_ocorrencia ? formatShortDate(item.data_ocorrencia) : '-') },
       ]}
     />
   );

@@ -59,6 +59,7 @@ export type Me = {
   nome: string;
   nome_guerra: string | null;
   posto_graduacao: string | null;
+  local_trabalho: string | null;
   is_staff: boolean;
   is_superuser: boolean;
   totp_enabled: boolean;

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { apiFetch, fetchMe, type Me } from '@/lib/api';
 import type { Atividade, OcorrenciaGeral, Paginated } from '@/lib/types';
-import { formatRelative } from '@/lib/format';
+import { formatRelative, formatUsuario } from '@/lib/format';
 import { Card, Centered, PageContainer, Spinner } from '@/lib/ui';
 import { cn } from '@/lib/cn';
 import AppShell from '@/components/AppShell';
@@ -95,7 +95,7 @@ export default function HomePage() {
       <PageContainer wide>
         <div className="mb-8">
           <h1 className="font-serif text-2xl tracking-tight text-stone-900 dark:text-stone-100">
-            Bem-vindo, {me.nome_guerra || me.nome}
+            Bem-vindo, {formatUsuario(me)}
           </h1>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{me.email}</p>
         </div>
