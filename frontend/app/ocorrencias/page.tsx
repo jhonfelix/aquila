@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { CheckCircle2, ChevronDown, Download, Pencil, Plus, Upload, XCircle } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Download, FileText, Pencil, Upload, XCircle } from 'lucide-react';
 import { apiFetch, fetchMe } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import type { OcorrenciaGeral, Paginated, RevisaoPainelArtefato } from '@/lib/types';
@@ -99,12 +99,14 @@ function AcaoDropdown({ ocorrenciaId }: { ocorrenciaId: number }) {
             </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="my-1 border-t border-stone-100 dark:border-stone-700" />
-          <DropdownMenu.Item
-            onClick={fakeAction}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
-          >
-            <Upload className="h-4 w-4" strokeWidth={1.75} />
-            Upload RAI
+          <DropdownMenu.Item asChild>
+            <Link
+              href={`/ocorrencias/${ocorrenciaId}/rai`}
+              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+            >
+              <FileText className="h-4 w-4" strokeWidth={1.75} />
+              RAI
+            </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onClick={fakeAction}
@@ -176,12 +178,8 @@ export default function OcorrenciasListPage() {
   return (
     <AppShell title="Ocorrências">
       <PageContainer wide>
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6">
           <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Ocorrências</h1>
-          <Link href="/ocorrencias/nova" className={buttonClass('primary')}>
-            <Plus className="h-4 w-4" strokeWidth={2} />
-            Redigir Ocorrência
-          </Link>
         </div>
 
         {selected.size > 0 && (

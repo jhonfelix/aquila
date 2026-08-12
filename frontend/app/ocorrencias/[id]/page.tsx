@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
-import { ChevronDown, Download, FileText, History, Trash2, Upload } from 'lucide-react';
+import { ChevronDown, Download, History, Trash2, Upload } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import type {
@@ -107,10 +107,6 @@ export default function OcorrenciaDetailPage() {
         <div className="mb-2 flex items-center justify-between">
           <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">{oc.numero_processo || `Ocorrência #${oc.id}`}</h1>
           <div className="flex items-center gap-3">
-            <Link href={`/ocorrencias/${oc.id}/rai`} className={buttonClass('ghost')}>
-              <FileText className="h-4 w-4" strokeWidth={1.75} />
-              RAI
-            </Link>
             <Link href={`/auditoria/ocorrencia.ocorrenciageral/${oc.id}`} className={buttonClass('ghost')}>
               <History className="h-4 w-4" strokeWidth={1.75} />
               Histórico

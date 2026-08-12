@@ -13,12 +13,12 @@ import {
   LogOut,
   PanelLeft,
   Pencil,
-  Plus,
   Rocket,
   ShieldCheck,
 } from 'lucide-react';
 import { apiFetch, fetchMe, type Me } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import OcorrenciaSearch from './OcorrenciaSearch';
 import ThemeToggle from './ThemeToggle';
 
 type NavItem = { href: string; label: string };
@@ -29,21 +29,21 @@ type NavSection = { label: string; icon: React.ElementType; items: NavItem[]; di
 // (Unfold). Só o Sidebar usa essas cores; o resto do app mantém o tema
 // terracota/claro-escuro normal.
 const SECTIONS: NavSection[] = [
-  {
-    label: 'Ocorrências',
-    icon: AlertTriangle,
-    items: [
-      { href: '/ocorrencias', label: 'Ocorrências Gerais' },
-      { href: '/ocorrencias/revisao-rf', label: 'Painel de Revisão RF' },
-    ],
-  },
-  {
+    {
     label: 'Redigir/Autenticar',
     icon: Pencil,
     items: [
       { href: '/ocorrencias/nova', label: 'Redigir' },
       { href: '/ocorrencias/confirmar', label: 'Confirmar' },
       { href: '/ocorrencias/autenticar', label: 'Autenticar' },
+    ],
+  },
+  {
+    label: 'Ocorrências',
+    icon: AlertTriangle,
+    items: [
+      { href: '/ocorrencias', label: 'Ocorrências Gerais' },
+      { href: '/ocorrencias/revisao-rf', label: 'Painel de Revisão RF' },
     ],
   },
   {
@@ -153,18 +153,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <div className="px-3 pt-4">
-        <Link
-          href="/ocorrencias/nova"
-          className={cn(
-            'flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-sky-400 transition-colors hover:bg-slate-800',
-            collapsed && 'justify-center px-0',
-          )}
-          title="Nova Ocorrência"
-        >
-          <Plus className="h-4 w-4 shrink-0" strokeWidth={2} />
-          {!collapsed && 'Nova Ocorrência'}
-        </Link>
+      <div className={cn('px-3 pt-4', collapsed && 'flex justify-center')}>
+        <OcorrenciaSearch collapsed={collapsed} onExpand={() => setCollapsed(false)} />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
