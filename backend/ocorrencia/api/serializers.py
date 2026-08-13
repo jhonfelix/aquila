@@ -161,6 +161,50 @@ class OcorrenciaGeralSerializer(serializers.ModelSerializer):
         ]
 
 
+class OcorrenciaInvestigadaSerializer(serializers.ModelSerializer):
+    """Somente-leitura — alimenta a tela "Controle da Investigação"
+    (ocorrencia/admin.py:1021-1095, OcorrenciaInvestigadaAdmin). Réplica dos
+    display methods do admin: artefatos, investigador (de OcorrenciaControle),
+    autenticado_em (de OcorrenciaAutenticacao) e situacao_investigacao (de
+    OcorrenciaControle, não existe em OcorrenciaGeral)."""
+
+    artefatos = serializers.SerializerMethodField()
+    investigador = serializers.SerializerMethodField()
+    autenticado_em = serializers.SerializerMethodField()
+    situacao_investigacao = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OcorrenciaGeral
+        fields = ['id', 'numero_processo', 'classificacao', 'dia', 'horario', 'artefatos', 'investigador', 'autenticado_em', 'situacao_investigacao']
+
+    def get_artefatos(self, obj):
+        return [
+            {'nome': str(a.artefato_espacial) if a.artefato_espacial else None}
+            for a in obj.ocorrencia_aeronave.all()
+        ]
+
+    def get_investigador(self, obj):
+        controle = obj.ocorrencia_controle.first()
+        if controle and controle.investigador_id:
+            u = controle.investigador
+            return {
+                'id': u.id,
+                'nome': u.nome,
+                'nome_guerra': u.nome_guerra,
+                'posto_graduacao': u.posto_graduacao,
+                'local_trabalho': u.local_trabalho,
+            }
+        return None
+
+    def get_autenticado_em(self, obj):
+        auth = obj.ocorrencia_autenticacao.first()
+        return auth.data_autenticacao if auth else None
+
+    def get_situacao_investigacao(self, obj):
+        controle = obj.ocorrencia_controle.first()
+        return controle.situacao_investigacao if controle else None
+
+
 class OcorrenciaAeronaveSerializer(serializers.ModelSerializer):
     artefato_espacial_detail = VeiculoLancadorSerializer(source='artefato_espacial', read_only=True)
 
@@ -201,9 +245,26 @@ class OcorrenciaRelatorioSerializer(serializers.ModelSerializer):
 
 
 class OcorrenciaRevisaoRelatorioSerializer(serializers.ModelSerializer):
+    """`revisor_display` expõe quem recebeu o relatório pra revisão — usado
+    pelo Histórico de Revisões no Painel de Revisão RF."""
+
+    revisor_display = serializers.SerializerMethodField()
+
     class Meta:
         model = OcorrenciaRevisaoRelatorio
         fields = '__all__'
+
+    def get_revisor_display(self, obj):
+        if obj.revisor_id:
+            u = obj.revisor
+            return {
+                'id': u.id,
+                'nome': u.nome,
+                'nome_guerra': u.nome_guerra,
+                'posto_graduacao': u.posto_graduacao,
+                'local_trabalho': u.local_trabalho,
+            }
+        return None
 
 
 class OcorrenciaConfirmacaoSerializer(serializers.ModelSerializer):

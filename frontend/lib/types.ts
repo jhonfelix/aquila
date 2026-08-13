@@ -193,6 +193,13 @@ export type OcorrenciaRevisaoRelatorio = {
   data_atribuicao: string | null;
   setor: string | null;
   revisor: number | null;
+  revisor_display: {
+    id: number;
+    nome: string;
+    nome_guerra: string | null;
+    posto_graduacao: string | null;
+    local_trabalho: string | null;
+  } | null;
   anexo: string | null;
   observacao: string | null;
   cadastrado_por: number | null;
@@ -428,6 +435,24 @@ export type OcorrenciaRaiFoto = {
   numero: number | null;
   descricao: string | null;
   data_foto: string | null;
+};
+
+export type OcorrenciaInvestigada = {
+  id: number;
+  numero_processo: string | null;
+  classificacao: string | null;
+  dia: string | null;
+  horario: string | null;
+  artefatos: { nome: string | null }[];
+  investigador: {
+    id: number;
+    nome: string;
+    nome_guerra: string | null;
+    posto_graduacao: string | null;
+    local_trabalho: string | null;
+  } | null;
+  autenticado_em: string | null;
+  situacao_investigacao: 'ATIVA' | 'FINALIZADA' | null;
 };
 
 export type RevisaoPainelArtefato = {

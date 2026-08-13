@@ -12,6 +12,7 @@ import type { OcorrenciaGeral, Paginated, RevisaoPainelArtefato, Usuario } from 
 import { CLASSIFICACAO_CHOICES, FASE_CHOICES } from '@/lib/choices';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
+import Pagination from '@/components/Pagination';
 import { Badge, PageContainer, Select, Spinner, buttonClass, inputClass } from '@/lib/ui';
 
 type Filters = {
@@ -32,7 +33,7 @@ const DEFAULT_FILTERS: Filters = {
   diaFim: '',
 };
 
-function buildQuery(filters: Filters) {
+function buildQuery(filters: Filters, page: number) {
   const q = new URLSearchParams();
   if (filters.status) q.set('status', filters.status);
   if (filters.classificacao) q.set('classificacao', filters.classificacao);
@@ -40,6 +41,7 @@ function buildQuery(filters: Filters) {
   if (filters.investigador) q.set('investigador', String(filters.investigador));
   if (filters.diaInicio) q.set('dia_inicio', filters.diaInicio);
   if (filters.diaFim) q.set('dia_fim', filters.diaFim);
+  q.set('page', String(page));
   return q.toString();
 }
 
@@ -167,6 +169,7 @@ export default function OcorrenciasListPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [page, setPage] = useState(1);
 
   function setFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -190,14 +193,20 @@ export default function OcorrenciasListPage() {
     });
   }, [router]);
 
+  // Filtro novo invalida a página atual — volta pro início do resultado filtrado.
+  useEffect(() => {
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
   useEffect(() => {
     if (!authChecked) return;
     setLoading(true);
-    apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?${buildQuery(filters)}`)
+    apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?${buildQuery(filters, page)}`)
       .then(setData)
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authChecked, filters]);
+  }, [authChecked, filters, page]);
 
   function toggleOne(id: number) {
     setSelected((prev) => {
@@ -374,6 +383,17 @@ export default function OcorrenciasListPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && data && (
+          <Pagination
+            page={page}
+            count={data.count}
+            hasPrevious={!!data.previous}
+            hasNext={!!data.next}
+            onChange={setPage}
+            label="ocorrências"
+          />
         )}
       </PageContainer>
     </AppShell>

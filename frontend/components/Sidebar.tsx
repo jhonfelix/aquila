@@ -54,8 +54,9 @@ const SECTIONS: NavSection[] = [
   {
     label: 'Controle e gestão',
     icon: CircleCheckBig,
-    items: [],
-    disabled: true,
+    items: [
+      { href: '/ocorrencias/controle-investigacao', label: 'Controle da Investigação', perm: 'ocorrencia.view_ocorrenciageral' },
+    ],
   },
   {
     label: 'Material de Apoio',
@@ -93,8 +94,29 @@ const SECTIONS: NavSection[] = [
   },
 ];
 
-function sectionIsActive(section: NavSection, pathname: string) {
-  return section.items.some((i) => pathname.startsWith(i.href));
+function matchesHref(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+// Vários itens podem "bater" com o pathname atual por prefixo (ex.:
+// /ocorrencias/confirmar também começa com /ocorrencias, o href de
+// "Ocorrências Gerais") — pega sempre o href mais específico (mais longo)
+// entre TODOS os itens do menu, não só dentro da própria seção, senão dois
+// itens de seções diferentes podiam ficar ativos ao mesmo tempo.
+function getActiveHref(pathname: string, sections: NavSection[]): string | null {
+  let best: string | null = null;
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (matchesHref(pathname, item.href) && (!best || item.href.length > best.length)) {
+        best = item.href;
+      }
+    }
+  }
+  return best;
+}
+
+function sectionIsActive(section: NavSection, activeHref: string | null) {
+  return section.items.some((i) => i.href === activeHref);
 }
 
 export default function Sidebar() {
@@ -116,8 +138,10 @@ export default function Sidebar() {
     items: section.items.filter((item) => !item.perm || hasPerm(me, item.perm)),
   })).filter((section) => section.disabled || section.items.length > 0);
 
+  const activeHref = getActiveHref(pathname, visibleSections);
+
   function isOpen(section: NavSection) {
-    return section.label in openOverrides ? openOverrides[section.label] : sectionIsActive(section, pathname);
+    return section.label in openOverrides ? openOverrides[section.label] : sectionIsActive(section, activeHref);
   }
 
   function toggleSection(section: NavSection) {
@@ -155,7 +179,7 @@ export default function Sidebar() {
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-600 text-white">
               <Rocket className="h-4 w-4" strokeWidth={2} />
             </span>
-            <span className="font-serif text-lg tracking-tight">ÁQUILA</span>
+            <span className="text-lg font-semibold tracking-tight">ÁQUILA</span>
           </Link>
         )}
         <div className={cn('flex items-center gap-1', collapsed && 'flex-col')}>
@@ -184,7 +208,7 @@ export default function Sidebar() {
 
         <div className="mt-5 space-y-3">
           {visibleSections.map((section) => {
-            const active = sectionIsActive(section, pathname);
+            const active = sectionIsActive(section, activeHref);
             const open = !section.disabled && isOpen(section);
             return (
               <div key={section.label}>
@@ -225,7 +249,7 @@ export default function Sidebar() {
                     {open && (
                       <div className="mt-0.5 space-y-0.5">
                         {section.items.map((item) => (
-                          <Link key={item.href} href={item.href} className={subItemClass(pathname.startsWith(item.href))}>
+                          <Link key={item.href} href={item.href} className={subItemClass(item.href === activeHref)}>
                             {item.label}
                           </Link>
                         ))}

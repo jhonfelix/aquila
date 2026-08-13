@@ -7,11 +7,12 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, History, MessageSquareText, Send, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import type { OcorrenciaRevisaoRelatorio, RevisaoPainelRow, Usuario } from '@/lib/types';
+import type { OcorrenciaRevisaoRelatorio, Paginated, RevisaoPainelRow, Usuario } from '@/lib/types';
 import { REVISAO_SETOR_CHOICES } from '@/lib/choices';
 import { formatUsuario, formatShortDate } from '@/lib/format';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
+import Pagination from '@/components/Pagination';
 import { Badge, Button, ErrorText, Field, PageContainer, Select, Spinner, fileInputClass, inputClass } from '@/lib/ui';
 import { cn } from '@/lib/cn';
 
@@ -180,16 +181,17 @@ function EncaminharModal({ row, onClose, onSaved }: { row: RevisaoPainelRow; onC
 export default function RevisaoRfPainelPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
-  const [rows, setRows] = useState<RevisaoPainelRow[] | null>(null);
+  const [data, setData] = useState<Paginated<RevisaoPainelRow> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [historicoFor, setHistoricoFor] = useState<RevisaoPainelRow | null>(null);
   const [historico, setHistorico] = useState<OcorrenciaRevisaoRelatorio[] | null>(null);
   const [encaminharFor, setEncaminharFor] = useState<RevisaoPainelRow | null>(null);
 
-  function loadRows() {
+  function loadRows(p: number) {
     setLoading(true);
-    apiFetch<RevisaoPainelRow[]>('/api/ocorrencia/revisao-relatorio/painel/')
-      .then(setRows)
+    apiFetch<Paginated<RevisaoPainelRow>>(`/api/ocorrencia/revisao-relatorio/painel/?page=${p}`)
+      .then(setData)
       .finally(() => setLoading(false));
   }
 
@@ -205,9 +207,9 @@ export default function RevisaoRfPainelPage() {
 
   useEffect(() => {
     if (!authChecked) return;
-    loadRows();
+    loadRows(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authChecked]);
+  }, [authChecked, page]);
 
   useEffect(() => {
     if (!historicoFor) return;
@@ -230,7 +232,7 @@ export default function RevisaoRfPainelPage() {
           </div>
         )}
 
-        {!loading && rows && (
+        {!loading && data && (
           <div className="overflow-visible rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
             <table className="w-full border-collapse text-sm">
               <thead>
@@ -246,7 +248,7 @@ export default function RevisaoRfPainelPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
+                {data.results.map((row) => (
                   <tr key={row.id} className="border-b border-stone-100 last:border-0 dark:border-stone-800">
                     <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
                       {row.artefatos.length > 0 ? row.artefatos.map((a) => a.nome).join(', ') : '-'}
@@ -266,7 +268,7 @@ export default function RevisaoRfPainelPage() {
                     </td>
                   </tr>
                 ))}
-                {rows.length === 0 && (
+                {data.results.length === 0 && (
                   <tr>
                     <td className="px-4 py-8 text-center text-stone-400 dark:text-stone-500" colSpan={8}>
                       Nenhuma revisão em andamento.
@@ -276,6 +278,17 @@ export default function RevisaoRfPainelPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && data && (
+          <Pagination
+            page={page}
+            count={data.count}
+            hasPrevious={!!data.previous}
+            hasNext={!!data.next}
+            onChange={setPage}
+            label="revisões"
+          />
         )}
 
         <Dialog.Root open={!!historicoFor} onOpenChange={(open) => !open && setHistoricoFor(null)}>
@@ -307,6 +320,9 @@ export default function RevisaoRfPainelPage() {
                           {h.data_atribuicao ? formatShortDate(h.data_atribuicao) : '-'}
                         </span>
                       </div>
+                      <p className="mt-1 text-stone-600 dark:text-stone-400">
+                        Revisor: {h.revisor_display ? formatUsuario(h.revisor_display) : '-'}
+                      </p>
                       {h.observacao && <p className="mt-1 text-stone-600 dark:text-stone-400">{h.observacao}</p>}
                     </li>
                   ))}
@@ -318,7 +334,7 @@ export default function RevisaoRfPainelPage() {
         </Dialog.Root>
 
         {encaminharFor && (
-          <EncaminharModal row={encaminharFor} onClose={() => setEncaminharFor(null)} onSaved={loadRows} />
+          <EncaminharModal row={encaminharFor} onClose={() => setEncaminharFor(null)} onSaved={() => loadRows(page)} />
         )}
       </PageContainer>
     </AppShell>

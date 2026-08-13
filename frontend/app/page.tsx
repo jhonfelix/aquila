@@ -119,7 +119,7 @@ export default function HomePage() {
     <AppShell title="Início">
       <PageContainer wide>
         <div className="mb-8">
-          <h1 className="font-serif text-2xl tracking-tight text-stone-900 dark:text-stone-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
             Bem-vindo, {formatUsuario(me)}
           </h1>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{me.email}</p>

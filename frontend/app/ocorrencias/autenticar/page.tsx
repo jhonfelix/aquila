@@ -8,6 +8,7 @@ import { toast } from '@/lib/toast';
 import { formatShortDate } from '@/lib/format';
 import type { OcorrenciaGeral, Paginated } from '@/lib/types';
 import AppShell from '@/components/AppShell';
+import Pagination from '@/components/Pagination';
 import { Badge, Button, ErrorText, PageContainer, Spinner } from '@/lib/ui';
 
 // Menu dedicado "Redigir/Autenticar" (espelha os proxy models do Django
@@ -20,10 +21,11 @@ export default function AutenticarOcorrenciasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actingId, setActingId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
-  const load = useCallback(() => {
+  const load = useCallback((p: number) => {
     setLoading(true);
-    apiFetch<Paginated<OcorrenciaGeral>>('/api/ocorrencia/ocorrencias/?status=AUTENTICAR')
+    apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?status=AUTENTICAR&page=${p}`)
       .then(setData)
       .finally(() => setLoading(false));
   }, []);
@@ -35,9 +37,13 @@ export default function AutenticarOcorrenciasPage() {
         return;
       }
       setAuthChecked(true);
-      load();
     });
-  }, [router, load]);
+  }, [router]);
+
+  useEffect(() => {
+    if (!authChecked) return;
+    load(page);
+  }, [authChecked, page, load]);
 
   async function handleDecisao(oc: OcorrenciaGeral, decisao: 'AUTENTICADO' | 'CONFIRMAR') {
     setError(null);
@@ -52,7 +58,7 @@ export default function AutenticarOcorrenciasPage() {
         decisao === 'AUTENTICADO' ? 'Ocorrência autenticada' : 'Ocorrência devolvida para confirmação',
         oc.numero_processo || `#${oc.id}`,
       );
-      load();
+      load(page);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Erro ao executar ação.';
       setError(message);
@@ -132,6 +138,17 @@ export default function AutenticarOcorrenciasPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && data && (
+          <Pagination
+            page={page}
+            count={data.count}
+            hasPrevious={!!data.previous}
+            hasNext={!!data.next}
+            onChange={setPage}
+            label="ocorrências aguardando autenticação"
+          />
         )}
       </PageContainer>
     </AppShell>

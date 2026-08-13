@@ -8,6 +8,7 @@ import { toast } from '@/lib/toast';
 import { formatShortDate } from '@/lib/format';
 import type { OcorrenciaGeral, Paginated } from '@/lib/types';
 import AppShell from '@/components/AppShell';
+import Pagination from '@/components/Pagination';
 import { Badge, Button, ErrorText, PageContainer, Spinner } from '@/lib/ui';
 
 // Menu dedicado "Redigir/Autenticar" (espelha os proxy models do Django
@@ -20,10 +21,11 @@ export default function ConfirmarOcorrenciasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actingId, setActingId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
-  const load = useCallback(() => {
+  const load = useCallback((p: number) => {
     setLoading(true);
-    apiFetch<Paginated<OcorrenciaGeral>>('/api/ocorrencia/ocorrencias/?status=CONFIRMAR')
+    apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?status=CONFIRMAR&page=${p}`)
       .then(setData)
       .finally(() => setLoading(false));
   }, []);
@@ -35,9 +37,13 @@ export default function ConfirmarOcorrenciasPage() {
         return;
       }
       setAuthChecked(true);
-      load();
     });
-  }, [router, load]);
+  }, [router]);
+
+  useEffect(() => {
+    if (!authChecked) return;
+    load(page);
+  }, [authChecked, page, load]);
 
   async function handleConfirmar(oc: OcorrenciaGeral) {
     setError(null);
@@ -49,7 +55,7 @@ export default function ConfirmarOcorrenciasPage() {
         body: JSON.stringify({ enviar_autenticacao: true }),
       });
       toast.success('Ocorrência enviada para autenticação', oc.numero_processo || `#${oc.id}`);
-      load();
+      load(page);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Erro ao confirmar ocorrência.';
       setError(message);
@@ -123,6 +129,17 @@ export default function ConfirmarOcorrenciasPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && data && (
+          <Pagination
+            page={page}
+            count={data.count}
+            hasPrevious={!!data.previous}
+            hasNext={!!data.next}
+            onChange={setPage}
+            label="ocorrências aguardando confirmação"
+          />
         )}
       </PageContainer>
     </AppShell>

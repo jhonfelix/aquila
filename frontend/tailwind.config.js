@@ -20,6 +20,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          'var(--font-inter)',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',

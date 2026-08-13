@@ -7,6 +7,7 @@ import { Plus, Search } from 'lucide-react';
 import { apiFetch, fetchMe } from '@/lib/api';
 import type { Paginated } from '@/lib/types';
 import AppShell from '@/components/AppShell';
+import Pagination from '@/components/Pagination';
 import { PageContainer, Spinner, buttonClass, inputClass } from '@/lib/ui';
 import { cn } from '@/lib/cn';
 
@@ -29,7 +30,7 @@ type Props = {
 
 // Lista genérica reusada por todas as telas CRUD mecanicamente similares
 // (taxonomia, material de apoio, usuários/grupos) — evita reescrever a
-// mesma tabela com busca 11 vezes.
+// mesma tabela com busca e paginação em cada uma.
 export default function ResourceListPage({
   apiPath,
   title,
@@ -45,6 +46,7 @@ export default function ResourceListPage({
   const [data, setData] = useState<Paginated<any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchMe().then((me) => {
@@ -56,15 +58,21 @@ export default function ResourceListPage({
     });
   }, [router]);
 
+  // Busca nova invalida a página atual — volta pro início do resultado filtrado.
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   useEffect(() => {
     if (!authChecked) return;
     setLoading(true);
     const q = new URLSearchParams();
     if (search.trim()) q.set('search', search.trim());
+    q.set('page', String(page));
     apiFetch<Paginated<any>>(`${apiPath}?${q.toString()}${extraQuery || ''}`)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [authChecked, search, apiPath, extraQuery]);
+  }, [authChecked, search, page, apiPath, extraQuery]);
 
   if (!authChecked) return null;
 
@@ -134,6 +142,17 @@ export default function ResourceListPage({
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && data && (
+          <Pagination
+            page={page}
+            count={data.count}
+            hasPrevious={!!data.previous}
+            hasNext={!!data.next}
+            onChange={setPage}
+            label={title.toLowerCase()}
+          />
         )}
       </PageContainer>
     </AppShell>

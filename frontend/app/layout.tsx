@@ -1,5 +1,15 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
+
+// Mesma fonte usada pelo Django Admin (tema Unfold, que carrega Inter via
+// @font-face próprio) — padroniza a tipografia entre os dois front-ends.
+// next/font faz o self-host em build time, sem requisição externa em runtime.
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'ÁQUILA',
@@ -12,7 +22,7 @@ const themeInitScript = `(function(){try{var t=localStorage.getItem('aquila-them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

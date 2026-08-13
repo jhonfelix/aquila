@@ -275,6 +275,30 @@ class OcorrenciaGeralViewSet(viewsets.ModelViewSet):
         return response
 
 
+class OcorrenciaInvestigadaViewSet(viewsets.ReadOnlyModelViewSet):
+    """Tela "Controle da Investigação" (menu Controle e gestão) — porta
+    OcorrenciaInvestigadaAdmin.get_queryset (admin.py:1021-1095): só lista
+    ocorrências já autenticadas e com o tratamento em 'INVESTIGADA'. Somente
+    leitura — edição/ações passam pelos endpoints que já existem
+    (ocorrencias/<id>/, revisao-relatorio/)."""
+
+    queryset = (
+        OcorrenciaGeral.objects.filter(ocorrencia_controle__status='INVESTIGADA', status='AUTENTICADO')
+        .select_related('cadastrado_por_id')
+        .prefetch_related(
+            'ocorrencia_aeronave',
+            'ocorrencia_aeronave__artefato_espacial',
+            'ocorrencia_autenticacao',
+            'ocorrencia_controle',
+            'ocorrencia_controle__investigador',
+        )
+        .distinct()
+        .order_by('-dia')
+    )
+    serializer_class = ser.OcorrenciaInvestigadaSerializer
+    search_fields = ['numero_processo', 'classificacao']
+
+
 class OcorrenciaAeronaveViewSet(_OcorrenciaChildViewSet):
     """O "foguete" da ocorrência — FK para VeiculoLancador (autocomplete, não criação inline)."""
 
@@ -389,6 +413,9 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
             )
             .order_by('-data_atribuicao', '-id')
         )
+        page = self.paginate_queryset(rows)
+        if page is not None:
+            return self.get_paginated_response([_serialize_revisao_painel_row(r) for r in page])
         return Response([_serialize_revisao_painel_row(r) for r in rows])
 
     @action(detail=False, methods=['get'])
