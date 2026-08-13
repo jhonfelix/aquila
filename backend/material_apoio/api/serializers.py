@@ -20,6 +20,12 @@ class MaterialApoioSerializer(serializers.ModelSerializer):
 
 
 class InvestigacaoOutrasAutoridadesSerializer(serializers.ModelSerializer):
+    """Campos *_display só-leitura usados pela tabela do frontend (tipo de
+    ocorrência e fase do voo, exibidos como texto)."""
+
+    tipo_ocorrencia_display = serializers.CharField(source='get_tipo_ocorrencia_display', read_only=True)
+    fase_voo_display = serializers.CharField(source='get_fase_voo_display', read_only=True)
+
     class Meta:
         model = InvestigacaoOutrasAutoridades
         fields = '__all__'

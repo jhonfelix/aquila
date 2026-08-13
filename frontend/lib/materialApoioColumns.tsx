@@ -1,22 +1,7 @@
-import { FileText } from 'lucide-react';
 import type { Column } from '@/components/crud/ResourceListPage';
 import type { MaterialApoio } from '@/lib/types';
 import { formatShortDate } from '@/lib/format';
-
-function FileLink({ url }: { url: string | null }) {
-  if (!url) return <span className="text-stone-400 dark:text-stone-500">-</span>;
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      className="inline-flex text-accent-600 hover:text-accent-700 dark:text-accent-400"
-    >
-      <FileText className="h-4 w-4" strokeWidth={1.75} />
-    </a>
-  );
-}
+import FileLink from '@/components/FileLink';
 
 // Reusado pelas 3 listas que compartilham o model MaterialApoio
 // (Formulários, Normas e Legislação, Documentos Diversos).

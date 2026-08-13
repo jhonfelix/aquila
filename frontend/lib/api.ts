@@ -79,3 +79,12 @@ export async function fetchMe(): Promise<Me | null> {
     throw err;
   }
 }
+
+// Espelha o `DjangoModelPermissionsWithView` do backend: permissão no
+// formato "app_label.acao_model" (ex.: "ocorrencia.view_ocorrenciageral").
+// Superusuário sempre tem tudo, igual ao Django (`user.has_perm`).
+export function hasPerm(me: Me | null | undefined, perm: string): boolean {
+  if (!me) return false;
+  if (me.is_superuser) return true;
+  return me.permissions.includes(perm);
+}

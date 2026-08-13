@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowRight,
+  ChevronDown,
   Clock,
   Eye,
   FilePlus,
@@ -17,7 +18,7 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import { apiFetch, fetchMe, type Me } from '@/lib/api';
+import { apiFetch, fetchMe, hasPerm, type Me } from '@/lib/api';
 import type { Atividade, OcorrenciaGeral, Paginated } from '@/lib/types';
 import { formatRelative, formatUsuario } from '@/lib/format';
 import { Card, Centered, PageContainer, Spinner } from '@/lib/ui';
@@ -25,10 +26,28 @@ import { cn } from '@/lib/cn';
 import AppShell from '@/components/AppShell';
 
 const SHORTCUTS = [
-  { href: '/ocorrencias', icon: FileStack, label: 'Ocorrências', desc: 'Redigir, confirmar e autenticar ocorrências espaciais.' },
-  { href: '/taxonomia/artefatos-espaciais', icon: Globe2, label: 'Taxonomia', desc: 'Países, cidades, aeródromos, artefatos e veículos.' },
-  { href: '/material-apoio/formularios', icon: FileText, label: 'Material de Apoio', desc: 'Formulários, normas, legislação e documentos.' },
-  { href: '/usuarios', icon: Users, label: 'Usuários', desc: 'Contas do sistema e grupos de permissão.' },
+  {
+    href: '/ocorrencias',
+    icon: FileStack,
+    label: 'Ocorrências',
+    desc: 'Redigir, confirmar e autenticar ocorrências espaciais.',
+    perm: 'ocorrencia.view_ocorrenciageral',
+  },
+  {
+    href: '/taxonomia/artefatos-espaciais',
+    icon: Globe2,
+    label: 'Taxonomia',
+    desc: 'Países, cidades, aeródromos, artefatos e veículos.',
+    perm: 'taxonomia.view_artefatoespacial',
+  },
+  {
+    href: '/material-apoio/formularios',
+    icon: FileText,
+    label: 'Material de Apoio',
+    desc: 'Formulários, normas, legislação e documentos.',
+    perm: 'material_apoio.view_formulario',
+  },
+  { href: '/usuarios', icon: Users, label: 'Usuários', desc: 'Contas do sistema e grupos de permissão.', perm: 'usuario.view_user' },
 ];
 
 type StatusCounts = { confirmar: number; autenticar: number; autenticado: number };
@@ -53,11 +72,11 @@ export default function HomePage() {
         return;
       }
       if (data.totp_enabled && !data['2fa_verified']) {
-        router.replace('/2fa/verify');
+        router.replace('/verificacao-2fa/verify');
         return;
       }
       if (data.totp_obrigatorio && !data.totp_enabled) {
-        router.replace('/2fa/setup');
+        router.replace('/verificacao-2fa/setup');
         return;
       }
       setMe(data);
@@ -66,16 +85,22 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!me) return;
-    Promise.all(
-      (['CONFIRMAR', 'AUTENTICAR', 'AUTENTICADO'] as const).map((status) =>
-        apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?status=${status}`),
-      ),
-    ).then(([confirmar, autenticar, autenticado]) => {
-      setCounts({ confirmar: confirmar.count, autenticar: autenticar.count, autenticado: autenticado.count });
-    });
+    // Só busca as contagens se o usuário puder ver ocorrências — do
+    // contrário o backend responde 403 (DjangoModelPermissionsWithView).
+    if (hasPerm(me, 'ocorrencia.view_ocorrenciageral')) {
+      Promise.all(
+        (['CONFIRMAR', 'AUTENTICAR', 'AUTENTICADO'] as const).map((status) =>
+          apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?status=${status}`),
+        ),
+      ).then(([confirmar, autenticar, autenticado]) => {
+        setCounts({ confirmar: confirmar.count, autenticar: autenticar.count, autenticado: autenticado.count });
+      });
+    }
 
     apiFetch<Atividade[]>('/api/auth/atividades/?limit=8').then(setAtividades);
   }, [me]);
+
+  const visibleShortcuts = SHORTCUTS.filter((s) => hasPerm(me, s.perm));
 
   if (me === undefined) {
     return (
@@ -100,16 +125,17 @@ export default function HomePage() {
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{me.email}</p>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile icon={FileStack} label="Total de Ocorrências" value={total} tone="neutral" />
-          <StatTile icon={Clock} label="Aguardando Confirmação" value={counts?.confirmar} tone="warning" />
-          <StatTile icon={ShieldAlert} label="Aguardando Autenticação" value={counts?.autenticar} tone="accent" />
-          <StatTile icon={ShieldCheck} label="Autenticadas" value={counts?.autenticado} tone="success" />
-        </div>
+        {hasPerm(me, 'ocorrencia.view_ocorrenciageral') && (
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatTile icon={FileStack} label="Total de Ocorrências" value={total} tone="neutral" />
+            <StatTile icon={Clock} label="Aguardando Confirmação" value={counts?.confirmar} tone="warning" />
+            <StatTile icon={ShieldAlert} label="Aguardando Autenticação" value={counts?.autenticar} tone="accent" />
+            <StatTile icon={ShieldCheck} label="Autenticadas" value={counts?.autenticado} tone="success" />
+          </div>
+        )}
 
-        <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Suas últimas atividades</h2>
+        <div className="mb-8 grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+          <CollapsibleCard title="Suas últimas atividades" className="lg:col-span-2">
             {atividades === null && (
               <div className="flex items-center gap-2 py-6 text-sm text-stone-400 dark:text-stone-500">
                 <Spinner /> Carregando…
@@ -141,12 +167,14 @@ export default function HomePage() {
                 })}
               </ul>
             )}
-          </Card>
+          </CollapsibleCard>
 
-          <Card>
-            <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Acesso Rápido</h2>
+          <CollapsibleCard title="Acesso Rápido">
             <div className="space-y-1">
-              {SHORTCUTS.map((s) => (
+              {visibleShortcuts.length === 0 && (
+                <p className="py-2 text-sm text-stone-400 dark:text-stone-500">Nenhum atalho disponível para o seu perfil.</p>
+              )}
+              {visibleShortcuts.map((s) => (
                 <Link
                   key={s.href}
                   href={s.href}
@@ -160,10 +188,23 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
-          </Card>
+          </CollapsibleCard>
         </div>
       </PageContainer>
     </AppShell>
+  );
+}
+
+function CollapsibleCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card className={className}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
+        <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
+        <ChevronDown className={cn('h-4 w-4 shrink-0 text-stone-400 transition-transform dark:text-stone-500', open && 'rotate-180')} strokeWidth={1.75} />
+      </button>
+      {open && <div className="mt-4">{children}</div>}
+    </Card>
   );
 }
 

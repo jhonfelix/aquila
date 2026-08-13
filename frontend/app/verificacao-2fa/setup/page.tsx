@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 import { apiFetch, ApiError } from '@/lib/api';
-import { Button, Card, Centered, ErrorText, Field, Spinner } from '@/lib/ui';
+import { Button, Card, Centered, ErrorText, Field, inputClass, Spinner } from '@/lib/ui';
+import { cn } from '@/lib/cn';
 import ThemeToggle from '@/components/ThemeToggle';
 
 type SetupData = { qr_b64: string; secret: string; already_enabled: boolean };
@@ -49,7 +50,7 @@ export default function TOTPSetupPage() {
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-600 text-white shadow-card">
             <ShieldCheck className="h-6 w-6" strokeWidth={2} />
           </span>
-          <h1 className="text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100">Configurar 2FA</h1>
+          <h1 className="font-serif text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100">Configurar 2FA</h1>
           <p className="text-sm text-stone-500 dark:text-stone-400">
             Escaneie o QR code com seu aplicativo autenticador (Google Authenticator, Authy, etc.) e digite o código
             gerado para confirmar.
@@ -70,7 +71,7 @@ export default function TOTPSetupPage() {
           <form onSubmit={handleSubmit}>
             <Field label="Código">
               <input
-                className="block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-center font-mono text-lg tracking-[0.4em] text-stone-900 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+                className={cn(inputClass, 'text-center font-mono text-lg tracking-[0.4em]')}
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"

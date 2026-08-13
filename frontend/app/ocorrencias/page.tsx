@@ -4,13 +4,44 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { CheckCircle2, ChevronDown, Download, FileText, Pencil, Upload, XCircle } from 'lucide-react';
+import { ChevronDown, Download, FileText, Pencil, Upload } from 'lucide-react';
 import { apiFetch, fetchMe } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { formatShortDate } from '@/lib/format';
-import type { OcorrenciaGeral, Paginated, RevisaoPainelArtefato } from '@/lib/types';
+import { formatShortDate, formatUsuario } from '@/lib/format';
+import type { OcorrenciaGeral, Paginated, RevisaoPainelArtefato, Usuario } from '@/lib/types';
+import { CLASSIFICACAO_CHOICES, FASE_CHOICES } from '@/lib/choices';
 import AppShell from '@/components/AppShell';
-import { Badge, PageContainer, Spinner, buttonClass } from '@/lib/ui';
+import AsyncCombobox from '@/components/AsyncCombobox';
+import { Badge, PageContainer, Select, Spinner, buttonClass, inputClass } from '@/lib/ui';
+
+type Filters = {
+  classificacao: string;
+  status: string;
+  fase: string;
+  investigador: number | null;
+  diaInicio: string;
+  diaFim: string;
+};
+
+const DEFAULT_FILTERS: Filters = {
+  classificacao: '',
+  status: 'AUTENTICADO',
+  fase: '',
+  investigador: null,
+  diaInicio: '',
+  diaFim: '',
+};
+
+function buildQuery(filters: Filters) {
+  const q = new URLSearchParams();
+  if (filters.status) q.set('status', filters.status);
+  if (filters.classificacao) q.set('classificacao', filters.classificacao);
+  if (filters.fase) q.set('fase', filters.fase);
+  if (filters.investigador) q.set('investigador', String(filters.investigador));
+  if (filters.diaInicio) q.set('dia_inicio', filters.diaInicio);
+  if (filters.diaFim) q.set('dia_fim', filters.diaFim);
+  return q.toString();
+}
 
 function statusTone(status: string) {
   if (status === 'CONFIRMAR') return 'warning' as const;
@@ -135,6 +166,19 @@ export default function OcorrenciasListPage() {
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+
+  function setFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
+    setFilters((f) => ({ ...f, [key]: value }));
+  }
+
+  const filtersActive =
+    filters.classificacao !== DEFAULT_FILTERS.classificacao ||
+    filters.status !== DEFAULT_FILTERS.status ||
+    filters.fase !== DEFAULT_FILTERS.fase ||
+    filters.investigador !== DEFAULT_FILTERS.investigador ||
+    filters.diaInicio !== DEFAULT_FILTERS.diaInicio ||
+    filters.diaFim !== DEFAULT_FILTERS.diaFim;
 
   useEffect(() => {
     fetchMe().then((me) => {
@@ -149,10 +193,11 @@ export default function OcorrenciasListPage() {
   useEffect(() => {
     if (!authChecked) return;
     setLoading(true);
-    apiFetch<Paginated<OcorrenciaGeral>>('/api/ocorrencia/ocorrencias/?status=AUTENTICADO')
+    apiFetch<Paginated<OcorrenciaGeral>>(`/api/ocorrencia/ocorrencias/?${buildQuery(filters)}`)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [authChecked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authChecked, filters]);
 
   function toggleOne(id: number) {
     setSelected((prev) => {
@@ -181,6 +226,55 @@ export default function OcorrenciasListPage() {
       <PageContainer wide>
         <div className="mb-6">
           <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Ocorrências</h1>
+        </div>
+
+        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-card dark:border-stone-800 dark:bg-stone-900">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Classificação</label>
+              <Select
+                value={filters.classificacao}
+                onChange={(v) => setFilter('classificacao', v)}
+                choices={CLASSIFICACAO_CHOICES}
+                emptyLabel="Todas"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Fase</label>
+              <Select value={filters.fase} onChange={(v) => setFilter('fase', v)} choices={FASE_CHOICES} emptyLabel="Todas" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Investigador Responsável</label>
+              <AsyncCombobox
+                apiPath="/api/usuarios/"
+                value={filters.investigador}
+                onChange={(v) => setFilter('investigador', v)}
+                getLabel={(u: Usuario) => formatUsuario(u)}
+                placeholder="Buscar…"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Período — de</label>
+              <input
+                className={inputClass}
+                type="date"
+                value={filters.diaInicio}
+                onChange={(e) => setFilter('diaInicio', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Período — até</label>
+              <input className={inputClass} type="date" value={filters.diaFim} onChange={(e) => setFilter('diaFim', e.target.value)} />
+            </div>
+          </div>
+          {filtersActive && (
+            <button
+              onClick={() => setFilters(DEFAULT_FILTERS)}
+              className="mt-3 text-xs font-medium text-accent-700 hover:underline dark:text-accent-400"
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
 
         {selected.size > 0 && (
@@ -221,8 +315,8 @@ export default function OcorrenciasListPage() {
                   </th>
                   <th className="px-4 py-3">ID</th>
                   <th className="px-4 py-3">Artefato Espacial</th>
-                  <th className="px-4 py-3">Verificar igualdade</th>
                   <th className="px-4 py-3">Classificação</th>
+                  <th className="px-4 py-3">Localização</th>
                   <th className="px-4 py-3">Data / Hora</th>
                   <th className="px-4 py-3">Status da Ocorrência</th>
                   <th className="px-4 py-3 text-right">Ação</th>
@@ -247,14 +341,16 @@ export default function OcorrenciasListPage() {
                     <td className="px-4 py-3">
                       <ArtefatoCell artefatos={oc.artefatos} />
                     </td>
-                    <td className="px-4 py-3">
-                      {oc.classificacao === 'ACIDENTE' ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={2} />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500 dark:text-red-400" strokeWidth={2} />
-                      )}
+                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                      {oc.classificacao || '-'}
+                      <br />
+                      <span className="text-xs text-stone-400 dark:text-stone-500">{oc.tipo_display || '-'}</span>
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.classificacao || '-'}</td>
+                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                      {oc.cidade_nome || '-'}
+                      <br />
+                      <span className="text-xs text-stone-400 dark:text-stone-500">{oc.local || '-'}</span>
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-stone-700 dark:text-stone-300">
                       {oc.dia ? formatShortDate(oc.dia) : '-'}
                       <br />
@@ -271,7 +367,7 @@ export default function OcorrenciasListPage() {
                 {data.results.length === 0 && (
                   <tr>
                     <td className="px-4 py-8 text-center text-stone-400 dark:text-stone-500" colSpan={8}>
-                      Nenhuma ocorrência autenticada ainda.
+                      Nenhuma ocorrência encontrada para os filtros selecionados.
                     </td>
                   </tr>
                 )}

@@ -10,6 +10,7 @@ import { toast } from '@/lib/toast';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
 import AsyncMultiCombobox from '@/components/AsyncMultiCombobox';
+import DualListBox from '@/components/DualListBox';
 import {
   Button,
   Card,
@@ -28,12 +29,16 @@ import { cn } from '@/lib/cn';
 export type FieldConfig = {
   name: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'date' | 'checkbox' | 'select' | 'async-fk' | 'async-fk-multi' | 'json-tags' | 'email' | 'password' | 'file';
+  type: 'text' | 'textarea' | 'number' | 'date' | 'checkbox' | 'select' | 'async-fk' | 'async-fk-multi' | 'dual-list' | 'json-tags' | 'email' | 'password' | 'file';
   required?: boolean;
   choices?: string[][];
   fkApiPath?: string;
   fkLabel?: (item: any) => string;
   helpText?: string;
+  dualListAvailableTitle?: string;
+  dualListChosenTitle?: string;
+  dualListAvailableHint?: string;
+  dualListChosenHint?: string;
 };
 
 type Props = {
@@ -43,12 +48,13 @@ type Props = {
   fields: FieldConfig[];
   listHref: string;
   defaultValues?: Record<string, any>;
+  wide?: boolean;
 };
 
 // Form genérico (create + edit + delete) reusado pelas telas CRUD
 // mecanicamente similares. Um FieldConfig[] descreve os campos; o resto
 // (auth guard, load, save, erros por campo, exclusão) é comum a todas.
-export default function ResourceFormPage({ apiPath, id, title, fields, listHref, defaultValues }: Props) {
+export default function ResourceFormPage({ apiPath, id, title, fields, listHref, defaultValues, wide }: Props) {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [form, setForm] = useState<Record<string, any>>(defaultValues || {});
@@ -160,7 +166,7 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
 
   return (
     <AppShell title={title}>
-      <PageContainer>
+      <PageContainer wide={wide}>
         <Link href={listHref} className="mb-4 inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200">
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
           Voltar
@@ -248,6 +254,19 @@ function renderInput(
           value={value ?? []}
           onChange={(v) => set(f.name, v)}
           getLabel={f.fkLabel!}
+        />
+      );
+    case 'dual-list':
+      return (
+        <DualListBox
+          apiPath={f.fkApiPath!}
+          value={value ?? []}
+          onChange={(v) => set(f.name, v)}
+          getLabel={f.fkLabel!}
+          availableTitle={f.dualListAvailableTitle}
+          chosenTitle={f.dualListChosenTitle}
+          availableHint={f.dualListAvailableHint}
+          chosenHint={f.dualListChosenHint}
         />
       );
     case 'json-tags':

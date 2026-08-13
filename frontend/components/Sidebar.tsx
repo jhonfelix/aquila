@@ -16,13 +16,17 @@ import {
   Rocket,
   ShieldCheck,
 } from 'lucide-react';
-import { apiFetch, fetchMe, type Me } from '@/lib/api';
+import { apiFetch, fetchMe, hasPerm, type Me } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatUsuario } from '@/lib/format';
 import OcorrenciaSearch from './OcorrenciaSearch';
 import ThemeToggle from './ThemeToggle';
 
-type NavItem = { href: string; label: string };
+// `perm` é a permissão Django (app_label.acao_model) exigida para o item
+// aparecer no menu — espelha o que o backend (DjangoModelPermissionsWithView)
+// realmente exige pra fazer GET no endpoint por trás da tela. Item sem
+// `perm` fica sempre visível (ex.: telas que não dependem de um único model).
+type NavItem = { href: string; label: string; perm?: string };
 type NavSection = { label: string; icon: React.ElementType; items: NavItem[]; disabled?: boolean };
 
 // Paleta azul-marinho/ciano fixa (não segue o toggle claro/escuro do app) —
@@ -34,17 +38,17 @@ const SECTIONS: NavSection[] = [
     label: 'Redigir/Autenticar',
     icon: Pencil,
     items: [
-      { href: '/ocorrencias/nova', label: 'Redigir' },
-      { href: '/ocorrencias/confirmar', label: 'Confirmar' },
-      { href: '/ocorrencias/autenticar', label: 'Autenticar' },
+      { href: '/ocorrencias/nova', label: 'Redigir', perm: 'ocorrencia.add_ocorrenciageral' },
+      { href: '/ocorrencias/confirmar', label: 'Confirmar', perm: 'ocorrencia.view_ocorrenciageral' },
+      { href: '/ocorrencias/autenticar', label: 'Autenticar', perm: 'ocorrencia.view_ocorrenciageral' },
     ],
   },
   {
     label: 'Ocorrências',
     icon: AlertTriangle,
     items: [
-      { href: '/ocorrencias', label: 'Ocorrências Gerais' },
-      { href: '/ocorrencias/revisao-rf', label: 'Painel de Revisão RF' },
+      { href: '/ocorrencias', label: 'Ocorrências Gerais', perm: 'ocorrencia.view_ocorrenciageral' },
+      { href: '/ocorrencias/revisao-rf', label: 'Painel de Revisão RF', perm: 'ocorrencia.view_ocorrenciarevisaorelatorio' },
     ],
   },
   {
@@ -57,30 +61,34 @@ const SECTIONS: NavSection[] = [
     label: 'Material de Apoio',
     icon: BookOpen,
     items: [
-      { href: '/material-apoio/formularios', label: 'Formulários' },
-      { href: '/material-apoio/normas-legislacao', label: 'Normas e Legislação' },
-      { href: '/material-apoio/documentos-diversos', label: 'Documentos Diversos' },
-      { href: '/material-apoio/outras-autoridades', label: 'Outras Autoridades' },
+      { href: '/material-apoio/formularios', label: 'Formulários', perm: 'material_apoio.view_formulario' },
+      { href: '/material-apoio/normas-legislacao', label: 'Normas e Legislação', perm: 'material_apoio.view_normalegislacao' },
+      { href: '/material-apoio/documentos-diversos', label: 'Documentos Diversos', perm: 'material_apoio.view_documentodiverso' },
+      {
+        href: '/material-apoio/outras-autoridades',
+        label: 'Investigações de Outras Autoridades',
+        perm: 'material_apoio.view_investigacaooutrasautoridades',
+      },
     ],
   },
   {
     label: 'Taxonomia',
     icon: ListTree,
     items: [
-      { href: '/taxonomia/paises', label: 'Países' },
-      { href: '/taxonomia/ufs', label: 'UFs' },
-      { href: '/taxonomia/cidades', label: 'Cidades' },
-      { href: '/taxonomia/aerodromos', label: 'Aeródromos' },
-      { href: '/taxonomia/artefatos-espaciais', label: 'Artefatos Espaciais' },
-      { href: '/taxonomia/veiculos-lancadores', label: 'Veículos Lançadores' },
+      { href: '/taxonomia/paises', label: 'Países', perm: 'taxonomia.view_geografiapais' },
+      { href: '/taxonomia/ufs', label: 'UFs', perm: 'taxonomia.view_geografiauf' },
+      { href: '/taxonomia/cidades', label: 'Cidades', perm: 'taxonomia.view_geografiacidade' },
+      { href: '/taxonomia/aerodromos', label: 'Aeródromos', perm: 'taxonomia.view_aerodromogeral' },
+      { href: '/taxonomia/artefatos-espaciais', label: 'Artefatos Espaciais', perm: 'taxonomia.view_artefatoespacial' },
+      { href: '/taxonomia/veiculos-lancadores', label: 'Veículos Lançadores', perm: 'taxonomia.view_veiculolancador' },
     ],
   },
   {
     label: 'Usuários & Grupos',
     icon: ShieldCheck,
     items: [
-      { href: '/usuarios', label: 'Usuários' },
-      { href: '/grupos', label: 'Grupos' },
+      { href: '/usuarios', label: 'Usuários', perm: 'usuario.view_user' },
+      { href: '/grupos', label: 'Grupos', perm: 'auth.view_group' },
     ],
   },
 ];
@@ -99,6 +107,14 @@ export default function Sidebar() {
   useEffect(() => {
     fetchMe().then(setMe).catch(() => setMe(null));
   }, []);
+
+  // Só mostra no menu o que o usuário de fato pode acessar — sem isso, um
+  // usuário com permissões restritas (ex.: só o grupo "Material de Apoio")
+  // via menu itens de telas que o backend bloqueia com 403.
+  const visibleSections = SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !item.perm || hasPerm(me, item.perm)),
+  })).filter((section) => section.disabled || section.items.length > 0);
 
   function isOpen(section: NavSection) {
     return section.label in openOverrides ? openOverrides[section.label] : sectionIsActive(section, pathname);
@@ -167,7 +183,7 @@ export default function Sidebar() {
         </div>
 
         <div className="mt-5 space-y-3">
-          {SECTIONS.map((section) => {
+          {visibleSections.map((section) => {
             const active = sectionIsActive(section, pathname);
             const open = !section.disabled && isOpen(section);
             return (

@@ -132,6 +132,8 @@ class OcorrenciaGeralSerializer(serializers.ModelSerializer):
     (admin.py:531-576) — usado pela lista Ocorrências Gerais no Next.js."""
 
     artefatos = serializers.SerializerMethodField()
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    cidade_nome = serializers.SerializerMethodField()
 
     class Meta:
         model = OcorrenciaGeral
@@ -140,6 +142,9 @@ class OcorrenciaGeralSerializer(serializers.ModelSerializer):
         # pela criação (Redigir) — nunca por PATCH direto, mesma regra do
         # admin (readonly_fields inclui os dois em OcorrenciaBaseAdminMixin).
         read_only_fields = ['status', 'numero_processo', 'cadastrado_por_id', 'cadastrado_em']
+
+    def get_cidade_nome(self, obj):
+        return str(obj.cidade) if obj.cidade_id else None
 
     def get_artefatos(self, obj):
         return [

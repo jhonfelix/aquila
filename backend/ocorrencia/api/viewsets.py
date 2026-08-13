@@ -1,5 +1,6 @@
 import csv
 
+import django_filters as df
 from django.core import serializers as django_serializers
 from django.db.models import Max, Subquery
 from django.http import HttpResponse
@@ -146,6 +147,22 @@ class OcorrenciaRaiFotoViewSet(viewsets.ModelViewSet):
 
 # ── Módulo carro-chefe: Ocorrência -> Foguete -> Documentos -> Gestão ──
 
+class OcorrenciaGeralFilterSet(df.FilterSet):
+    """Filtros da listagem Ocorrências Gerais. `investigador` e `fase` vivem
+    em OcorrenciaControle (1:N via ocorrencia_controle), não em
+    OcorrenciaGeral — por isso viram filtros custom em vez de entradas
+    simples em filterset_fields."""
+
+    dia_inicio = df.DateFilter(field_name='dia', lookup_expr='gte', label='Data da ocorrência (início)')
+    dia_fim = df.DateFilter(field_name='dia', lookup_expr='lte', label='Data da ocorrência (fim)')
+    investigador = df.NumberFilter(field_name='ocorrencia_controle__investigador')
+    fase = df.CharFilter(field_name='ocorrencia_controle__fase_atual')
+
+    class Meta:
+        model = OcorrenciaGeral
+        fields = ['status', 'classificacao', 'tipo', 'localizacao_tipo', 'dia_inicio', 'dia_fim', 'investigador', 'fase']
+
+
 class OcorrenciaGeralViewSet(viewsets.ModelViewSet):
     """CRUD + máquina de estado (Redigir -> Confirmar -> Autenticar).
 
@@ -159,10 +176,10 @@ class OcorrenciaGeralViewSet(viewsets.ModelViewSet):
 
     queryset = OcorrenciaGeral.objects.select_related('cidade', 'aerodromo', 'cadastrado_por_id').prefetch_related(
         'ocorrencia_aeronave', 'ocorrencia_aeronave__artefato_espacial', 'ocorrencia_aeronave__artefato_espacial__artefato',
-    ).all()
+    ).distinct()
     serializer_class = ser.OcorrenciaGeralSerializer
     search_fields = ['numero_processo', 'classificacao']
-    filterset_fields = ['status', 'classificacao', 'tipo', 'localizacao_tipo']
+    filterset_class = OcorrenciaGeralFilterSet
 
     def perform_create(self, serializer):
         obj = serializer.save(cadastrado_por_id=self.request.user, status='CONFIRMAR')

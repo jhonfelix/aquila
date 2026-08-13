@@ -14,12 +14,14 @@ export type OcorrenciaGeral = {
   publico: boolean | null;
   classificacao: string | null;
   tipo: string | null;
+  tipo_display: string | null;
   dia_comunicacao: string | null;
   dia: string | null;
   horario: string | null;
   dia_utc: string | null;
   horario_utc: string | null;
   cidade: number;
+  cidade_nome: string | null;
   local: string | null;
   aerodromo: number;
   latitude: string | null;
@@ -288,7 +290,9 @@ export type InvestigacaoOutrasAutoridades = {
   veiculo: string | null;
   operador: string | null;
   tipo_ocorrencia: string;
+  tipo_ocorrencia_display: string | null;
   fase_voo: string | null;
+  fase_voo_display: string | null;
   data_ocorrencia: string | null;
   data_publicacao: string | null;
   documento_pdf: string | null;

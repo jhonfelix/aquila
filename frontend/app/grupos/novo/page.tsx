@@ -7,12 +7,16 @@ const FIELDS: FieldConfig[] = [
   {
     name: 'permissions',
     label: 'Permissões',
-    type: 'async-fk-multi',
+    type: 'dual-list',
     fkApiPath: '/api/permissions/',
-    fkLabel: (p) => `${p.name} (${p.app_label}.${p.model})`,
+    fkLabel: (p) => `${p.app_label_display} | ${p.model_display} | ${p.name}`,
+    dualListAvailableTitle: 'permissões disponíveis',
+    dualListChosenTitle: 'permissões escolhido(s)',
+    dualListAvailableHint: 'Escolha as permissões selecionando-as e clique na seta "Adicionar".',
+    dualListChosenHint: 'Remova as permissões selecionando-as e clique na seta "Remover".',
   },
 ];
 
 export default function NovoGrupoPage() {
-  return <ResourceFormPage apiPath="/api/grupos/" title="Novo Grupo" fields={FIELDS} listHref="/grupos" />;
+  return <ResourceFormPage apiPath="/api/grupos/" title="Novo Grupo" fields={FIELDS} listHref="/grupos" wide />;
 }

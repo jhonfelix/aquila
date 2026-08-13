@@ -20,9 +20,12 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 
 class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
-    """Somente-leitura — alimenta o multi-select de permissões no form de Grupo."""
+    """Somente-leitura — alimenta o widget de transferência de permissões no
+    form de Grupo. Sem paginação: o widget carrega a lista inteira uma vez e
+    filtra no cliente, igual ao SelectFilter2 do Django Admin."""
 
     queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'codename')
     serializer_class = PermissionSerializer
     search_fields = ['name', 'codename']
     filterset_fields = ['content_type__app_label']
+    pagination_class = None
