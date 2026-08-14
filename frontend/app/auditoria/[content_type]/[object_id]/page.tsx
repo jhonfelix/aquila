@@ -18,13 +18,13 @@ function actionTone(action: number) {
 function EntryRow({ entry }: { entry: AuditLogEntryEntry }) {
   const changeKeys = entry.changes ? Object.keys(entry.changes) : [];
   return (
-    <li className="rounded-lg border border-stone-200 p-3 text-sm dark:border-stone-800">
+    <li className="rounded-lg border border-mist-200 p-3 text-sm dark:border-space-700">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Badge tone={actionTone(entry.action)}>{entry.action_display}</Badge>
-          <span className="font-medium text-stone-800 dark:text-stone-200">{entry.object_repr}</span>
+          <span className="font-medium text-slate-800 dark:text-slate-200">{entry.object_repr}</span>
         </div>
-        <span className="text-xs text-stone-400 dark:text-stone-500">
+        <span className="text-xs text-slate-400 dark:text-slate-500">
           {entry.actor || 'Sistema'} · {new Date(entry.timestamp).toLocaleString('pt-BR')}
         </span>
       </div>
@@ -32,10 +32,10 @@ function EntryRow({ entry }: { entry: AuditLogEntryEntry }) {
         <table className="mt-2 w-full text-xs">
           <tbody>
             {changeKeys.map((field) => (
-              <tr key={field} className="border-t border-stone-100 dark:border-stone-800">
-                <td className="py-1 pr-3 font-medium text-stone-500 dark:text-stone-400">{field}</td>
-                <td className="py-1 pr-3 text-stone-400 line-through dark:text-stone-600">{String(entry.changes![field][0])}</td>
-                <td className="py-1 text-stone-700 dark:text-stone-300">{String(entry.changes![field][1])}</td>
+              <tr key={field} className="border-t border-mist-200 dark:border-space-700">
+                <td className="py-1 pr-3 font-medium text-slate-500 dark:text-slate-400">{field}</td>
+                <td className="py-1 pr-3 text-slate-400 line-through dark:text-slate-600">{String(entry.changes![field][0])}</td>
+                <td className="py-1 text-slate-700 dark:text-slate-300">{String(entry.changes![field][1])}</td>
               </tr>
             ))}
           </tbody>
@@ -79,10 +79,10 @@ export default function AuditoriaPage() {
           Voltar
         </button>
 
-        <h1 className="mb-6 text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Histórico de Auditoria</h1>
+        <h1 className="mb-6 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Histórico de Auditoria</h1>
 
         {!trail && (
-          <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+          <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
             <Spinner /> Carregando…
           </div>
         )}
@@ -90,23 +90,23 @@ export default function AuditoriaPage() {
         {trail && (
           <div className="space-y-6">
             <Card>
-              <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Registro Principal</h2>
+              <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Registro Principal</h2>
               <ol className="space-y-2">
                 {trail.entries.map((e) => (
                   <EntryRow key={e.id} entry={e} />
                 ))}
-                {trail.entries.length === 0 && <li className="text-sm text-stone-400 dark:text-stone-500">Sem registros.</li>}
+                {trail.entries.length === 0 && <li className="text-sm text-slate-400 dark:text-slate-500">Sem registros.</li>}
               </ol>
             </Card>
 
             {trail.related.map((group) => (
               <Card key={group.anchor}>
-                <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">{group.label}</h2>
+                <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">{group.label}</h2>
                 <ol className="space-y-2">
                   {group.entries.map((e) => (
                     <EntryRow key={e.id} entry={e} />
                   ))}
-                  {group.entries.length === 0 && <li className="text-sm text-stone-400 dark:text-stone-500">Sem registros.</li>}
+                  {group.entries.length === 0 && <li className="text-sm text-slate-400 dark:text-slate-500">Sem registros.</li>}
                 </ol>
               </Card>
             ))}

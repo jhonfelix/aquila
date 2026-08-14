@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { aerodromoSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -30,6 +31,7 @@ export default function EditarAerodromoPage() {
       title="Editar Aeródromo"
       fields={FIELDS}
       listHref="/taxonomia/aerodromos"
+      schema={aerodromoSchema}
     />
   );
 }

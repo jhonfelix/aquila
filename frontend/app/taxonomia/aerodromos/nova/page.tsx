@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { aerodromoSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -22,6 +23,12 @@ const FIELDS: FieldConfig[] = [
 
 export default function NovoAerodromoPage() {
   return (
-    <ResourceFormPage apiPath="/api/taxonomia/aerodromos/" title="Novo Aeródromo" fields={FIELDS} listHref="/taxonomia/aerodromos" />
+    <ResourceFormPage
+      apiPath="/api/taxonomia/aerodromos/"
+      title="Novo Aeródromo"
+      fields={FIELDS}
+      listHref="/taxonomia/aerodromos"
+      schema={aerodromoSchema}
+    />
   );
 }

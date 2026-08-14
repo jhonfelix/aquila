@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { paisSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -13,6 +14,13 @@ const FIELDS: FieldConfig[] = [
 export default function EditarPaisPage() {
   const { id } = useParams<{ id: string }>();
   return (
-    <ResourceFormPage apiPath="/api/taxonomia/paises/" id={id} title="Editar País" fields={FIELDS} listHref="/taxonomia/paises" />
+    <ResourceFormPage
+      apiPath="/api/taxonomia/paises/"
+      id={id}
+      title="Editar País"
+      fields={FIELDS}
+      listHref="/taxonomia/paises"
+      schema={paisSchema}
+    />
   );
 }

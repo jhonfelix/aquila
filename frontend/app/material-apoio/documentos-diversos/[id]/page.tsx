@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { MATERIAL_TIPO_DOCUMENTO_CHOICES } from '@/lib/choices';
 import { formatUsuario } from '@/lib/format';
+import { documentoDiversoSchema } from '@/lib/schemas/materialApoio';
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
@@ -34,6 +35,7 @@ export default function EditarDocumentoDiversoPage() {
       title="Editar Documento Diverso"
       fields={FIELDS}
       listHref="/material-apoio/documentos-diversos"
+      schema={documentoDiversoSchema}
     />
   );
 }

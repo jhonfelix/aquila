@@ -3,6 +3,7 @@
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { MATERIAL_TIPO_DOCUMENTO_CHOICES } from '@/lib/choices';
 import { formatUsuario } from '@/lib/format';
+import { documentoDiversoSchema } from '@/lib/schemas/materialApoio';
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
@@ -32,6 +33,7 @@ export default function NovoDocumentoDiversoPage() {
       fields={FIELDS}
       listHref="/material-apoio/documentos-diversos"
       defaultValues={{ categoria: 'OUTRO' }}
+      schema={documentoDiversoSchema}
     />
   );
 }

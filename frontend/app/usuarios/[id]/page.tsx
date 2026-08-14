@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { POSTO_GRADUACAO_CHOICES, LOCAL_TRABALHO_CHOICES } from '@/lib/choices';
+import { usuarioEditSchema } from '@/lib/schemas/usuarios';
 
 const FIELDS: FieldConfig[] = [
   { name: 'email', label: 'E-mail', type: 'email', required: true },
@@ -48,5 +49,15 @@ const FIELDS: FieldConfig[] = [
 
 export default function EditarUsuarioPage() {
   const { id } = useParams<{ id: string }>();
-  return <ResourceFormPage apiPath="/api/usuarios/" id={id} title="Editar Usuário" fields={FIELDS} listHref="/usuarios" wide />;
+  return (
+    <ResourceFormPage
+      apiPath="/api/usuarios/"
+      id={id}
+      title="Editar Usuário"
+      fields={FIELDS}
+      listHref="/usuarios"
+      wide
+      schema={usuarioEditSchema}
+    />
+  );
 }

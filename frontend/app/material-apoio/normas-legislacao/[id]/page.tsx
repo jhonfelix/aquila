@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { MATERIAL_TIPO_DOCUMENTO_CHOICES } from '@/lib/choices';
 import { formatUsuario } from '@/lib/format';
+import { normaLegislacaoSchema } from '@/lib/schemas/materialApoio';
 
 const CATEGORIA_NORMA_CHOICES = [
   ['NORMA', 'Norma'],
@@ -46,6 +47,7 @@ export default function EditarNormaPage() {
       title="Editar Norma/Legislação"
       fields={FIELDS}
       listHref="/material-apoio/normas-legislacao"
+      schema={normaLegislacaoSchema}
     />
   );
 }

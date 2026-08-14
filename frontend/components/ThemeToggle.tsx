@@ -30,7 +30,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
     <button
       onClick={toggle}
       className={cn(
-        'flex h-8 w-8 items-center justify-center rounded-md text-stone-400 transition-colors hover:bg-stone-200/60 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200',
+        'flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-mist-100 hover:text-slate-700 dark:hover:bg-space-800 dark:hover:text-slate-200',
         className,
       )}
       title={dark ? 'Modo claro' : 'Modo escuro'}

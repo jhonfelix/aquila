@@ -53,7 +53,7 @@ export default function Pagination({
 
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-stone-500 dark:text-stone-400">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         {count} {label}
       </p>
       {totalPages > 1 && (
@@ -62,14 +62,14 @@ export default function Pagination({
             type="button"
             onClick={() => onChange(Math.max(1, page - 1))}
             disabled={!hasPrevious}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-stone-400 dark:hover:bg-stone-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-mist-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-slate-400 dark:hover:bg-space-800"
             aria-label="Página anterior"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
           </button>
           {buildPageList(page, totalPages).map((p, idx) =>
             p === '…' ? (
-              <span key={`ellipsis-${idx}`} className="px-1.5 text-sm text-stone-400 dark:text-stone-500">
+              <span key={`ellipsis-${idx}`} className="px-1.5 text-sm text-slate-400 dark:text-slate-500">
                 …
               </span>
             ) : (
@@ -81,7 +81,7 @@ export default function Pagination({
                   'flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors',
                   p === page
                     ? 'bg-accent-600 text-white'
-                    : 'text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800',
+                    : 'text-slate-600 hover:bg-mist-100 dark:text-slate-300 dark:hover:bg-space-800',
                 )}
               >
                 {p}
@@ -92,7 +92,7 @@ export default function Pagination({
             type="button"
             onClick={() => onChange(Math.min(totalPages, page + 1))}
             disabled={!hasNext}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-stone-400 dark:hover:bg-stone-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-mist-100 disabled:cursor-not-allowed disabled:opacity-30 dark:text-slate-400 dark:hover:bg-space-800"
             aria-label="Próxima página"
           >
             <ChevronRight className="h-4 w-4" strokeWidth={1.75} />

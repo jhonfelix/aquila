@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { ufSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -11,5 +12,13 @@ const FIELDS: FieldConfig[] = [
 ];
 
 export default function NovaUfPage() {
-  return <ResourceFormPage apiPath="/api/taxonomia/ufs/" title="Nova UF" fields={FIELDS} listHref="/taxonomia/ufs" />;
+  return (
+    <ResourceFormPage
+      apiPath="/api/taxonomia/ufs/"
+      title="Nova UF"
+      fields={FIELDS}
+      listHref="/taxonomia/ufs"
+      schema={ufSchema}
+    />
+  );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { cidadeSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -12,5 +13,13 @@ const FIELDS: FieldConfig[] = [
 ];
 
 export default function NovaCidadePage() {
-  return <ResourceFormPage apiPath="/api/taxonomia/cidades/" title="Nova Cidade" fields={FIELDS} listHref="/taxonomia/cidades" />;
+  return (
+    <ResourceFormPage
+      apiPath="/api/taxonomia/cidades/"
+      title="Nova Cidade"
+      fields={FIELDS}
+      listHref="/taxonomia/cidades"
+      schema={cidadeSchema}
+    />
+  );
 }

@@ -50,26 +50,26 @@ function AcaoDropdown({
         <DropdownMenu.Content
           align="end"
           sideOffset={4}
-          className="z-50 w-56 rounded-lg border border-stone-200 bg-white py-1 shadow-popover dark:border-stone-700 dark:bg-stone-800"
+          className="z-50 w-56 rounded-lg border border-mist-200 bg-white py-1 shadow-popover dark:border-space-700 dark:bg-space-800"
         >
           <DropdownMenu.Item
             onClick={onHistorico}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
           >
             <History className="h-4 w-4" strokeWidth={1.75} />
             Histórico
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1 border-t border-stone-100 dark:border-stone-700" />
+          <DropdownMenu.Separator className="my-1 border-t border-mist-200 dark:border-space-700" />
           <DropdownMenu.Item
             onClick={onEncaminhar}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
           >
             <Send className="h-4 w-4" strokeWidth={1.75} />
             Encaminhar Revisão
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onClick={fakeAction}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
           >
             <MessageSquareText className="h-4 w-4" strokeWidth={1.75} />
             Fazer Feedback
@@ -121,17 +121,17 @@ function EncaminharModal({ row, onClose, onSaved }: { row: RevisaoPainelRow; onC
   return (
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-stone-900/40 dark:bg-black/60" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-stone-900">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
           <div className="mb-4 flex items-center justify-between">
-            <Dialog.Title className="text-base font-semibold text-stone-900 dark:text-stone-100">Encaminhar Revisão</Dialog.Title>
-            <Dialog.Close className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200">
+            <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">Encaminhar Revisão</Dialog.Title>
+            <Dialog.Close className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
               <X className="h-4 w-4" strokeWidth={2} />
             </Dialog.Close>
           </div>
-          <Dialog.Description className="mb-4 text-sm text-stone-500 dark:text-stone-400">
+          <Dialog.Description className="mb-4 text-sm text-slate-500 dark:text-slate-400">
             Cria a próxima etapa de revisão para{' '}
-            <span className="font-medium text-stone-700 dark:text-stone-300">
+            <span className="font-medium text-slate-700 dark:text-slate-300">
               {row.artefatos.length > 0 ? row.artefatos.map((a) => a.nome).join(', ') : `Ocorrência #${row.ocorrencia_id}`}
             </span>
             .
@@ -224,19 +224,19 @@ export default function RevisaoRfPainelPage() {
   return (
     <AppShell title="Painel de Revisão RF">
       <PageContainer wide>
-        <h1 className="mb-6 text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Painel de Revisão RF</h1>
+        <h1 className="mb-6 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Painel de Revisão RF</h1>
 
         {loading && (
-          <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+          <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
             <Spinner /> Carregando…
           </div>
         )}
 
         {!loading && data && (
-          <div className="overflow-visible rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
+          <div className="overflow-visible rounded-xl border border-mist-200 bg-white shadow-card dark:border-space-700 dark:bg-space-900">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/60 text-left text-xs font-medium uppercase tracking-wide text-stone-500 dark:border-stone-800 dark:bg-stone-800/40 dark:text-stone-400">
+                <tr className="border-b border-mist-200 bg-mist-100/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-space-700 dark:bg-space-800/40 dark:text-slate-400">
                   <th className="px-4 py-3">Artefato Espacial</th>
                   <th className="px-4 py-3">Classificação</th>
                   <th className="px-4 py-3">Observação</th>
@@ -249,20 +249,20 @@ export default function RevisaoRfPainelPage() {
               </thead>
               <tbody>
                 {data.results.map((row) => (
-                  <tr key={row.id} className="border-b border-stone-100 last:border-0 dark:border-stone-800">
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                  <tr key={row.id} className="border-b border-mist-200 last:border-0 dark:border-space-700">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                       {row.artefatos.length > 0 ? row.artefatos.map((a) => a.nome).join(', ') : '-'}
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{row.classificacao || '-'}</td>
-                    <td className="max-w-xs truncate px-4 py-3 text-stone-700 dark:text-stone-300">{row.observacao || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.classificacao || '-'}</td>
+                    <td className="max-w-xs truncate px-4 py-3 text-slate-700 dark:text-slate-300">{row.observacao || '-'}</td>
                     <td className="px-4 py-3">
                       {row.prioridade_display ? <Badge tone={prioridadeTone(row.prioridade)}>{row.prioridade_display}</Badge> : '-'}
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                       {row.data_atribuicao ? formatShortDate(row.data_atribuicao) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{row.revisor || '-'}</td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{row.setor_display || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.revisor || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.setor_display || '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <AcaoDropdown row={row} onHistorico={() => setHistoricoFor(row)} onEncaminhar={() => setEncaminharFor(row)} />
                     </td>
@@ -270,7 +270,7 @@ export default function RevisaoRfPainelPage() {
                 ))}
                 {data.results.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-stone-400 dark:text-stone-500" colSpan={8}>
+                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={8}>
                       Nenhuma revisão em andamento.
                     </td>
                   </tr>
@@ -293,19 +293,19 @@ export default function RevisaoRfPainelPage() {
 
         <Dialog.Root open={!!historicoFor} onOpenChange={(open) => !open && setHistoricoFor(null)}>
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-40 bg-stone-900/40 dark:bg-black/60" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[80vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-stone-900">
+            <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[80vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
               <div className="mb-4 flex items-center justify-between">
-                <Dialog.Title className="text-base font-semibold text-stone-900 dark:text-stone-100">
+                <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">
                   Histórico de Revisões
                 </Dialog.Title>
-                <Dialog.Close className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200">
+                <Dialog.Close className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                   <X className="h-4 w-4" strokeWidth={2} />
                 </Dialog.Close>
               </div>
 
               {!historico && (
-                <div className="flex items-center gap-2 py-6 text-sm text-stone-400 dark:text-stone-500">
+                <div className="flex items-center gap-2 py-6 text-sm text-slate-400 dark:text-slate-500">
                   <Spinner /> Carregando…
                 </div>
               )}
@@ -313,20 +313,20 @@ export default function RevisaoRfPainelPage() {
               {historico && (
                 <ol className="space-y-3">
                   {historico.map((h) => (
-                    <li key={h.id} className="rounded-lg border border-stone-200 p-3 text-sm dark:border-stone-800">
+                    <li key={h.id} className="rounded-lg border border-mist-200 p-3 text-sm dark:border-space-700">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-stone-800 dark:text-stone-200">{h.setor || '-'}</span>
-                        <span className="text-xs text-stone-400 dark:text-stone-500">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{h.setor || '-'}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">
                           {h.data_atribuicao ? formatShortDate(h.data_atribuicao) : '-'}
                         </span>
                       </div>
-                      <p className="mt-1 text-stone-600 dark:text-stone-400">
+                      <p className="mt-1 text-slate-600 dark:text-slate-400">
                         Revisor: {h.revisor_display ? formatUsuario(h.revisor_display) : '-'}
                       </p>
-                      {h.observacao && <p className="mt-1 text-stone-600 dark:text-stone-400">{h.observacao}</p>}
+                      {h.observacao && <p className="mt-1 text-slate-600 dark:text-slate-400">{h.observacao}</p>}
                     </li>
                   ))}
-                  {historico.length === 0 && <li className="text-sm text-stone-400 dark:text-stone-500">Sem registros.</li>}
+                  {historico.length === 0 && <li className="text-sm text-slate-400 dark:text-slate-500">Sem registros.</li>}
                 </ol>
               )}
             </Dialog.Content>

@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { cidadeSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -15,6 +16,13 @@ const FIELDS: FieldConfig[] = [
 export default function EditarCidadePage() {
   const { id } = useParams<{ id: string }>();
   return (
-    <ResourceFormPage apiPath="/api/taxonomia/cidades/" id={id} title="Editar Cidade" fields={FIELDS} listHref="/taxonomia/cidades" />
+    <ResourceFormPage
+      apiPath="/api/taxonomia/cidades/"
+      id={id}
+      title="Editar Cidade"
+      fields={FIELDS}
+      listHref="/taxonomia/cidades"
+      schema={cidadeSchema}
+    />
   );
 }

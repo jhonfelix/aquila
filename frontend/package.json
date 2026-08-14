@@ -21,7 +21,8 @@
     "@radix-ui/react-label": "latest",
     "@radix-ui/react-toast": "latest",
     "clsx": "latest",
-    "tailwind-merge": "latest"
+    "tailwind-merge": "latest",
+    "zod": "latest"
   },
   "devDependencies": {
     "typescript": "5.4.5",

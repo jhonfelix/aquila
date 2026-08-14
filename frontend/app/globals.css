@@ -7,13 +7,7 @@
     @apply antialiased;
   }
   body {
-    @apply bg-stone-50 text-stone-900 font-sans dark:text-stone-100;
-  }
-  /* Cor de fundo capturada do tema do Django Admin (Unfold, base-950 —
-     backend/dedalo/settings.py UNFOLD.COLORS.base.950), pra igualar o
-     modo escuro do Áquila ao admin. */
-  .dark body {
-    background-color: oklch(13% 0.028 261.692);
+    @apply bg-mist-50 text-slate-900 font-sans dark:bg-space-950 dark:text-slate-100;
   }
   ::selection {
     @apply bg-accent-200 text-accent-900 dark:bg-accent-800 dark:text-accent-50;
@@ -23,5 +17,16 @@
 @layer utilities {
   .focus-ring {
     @apply outline-none ring-2 ring-accent-400/50 ring-offset-2 ring-offset-white;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

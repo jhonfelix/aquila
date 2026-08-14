@@ -3,6 +3,7 @@
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { MATERIAL_TIPO_DOCUMENTO_CHOICES } from '@/lib/choices';
 import { formatUsuario } from '@/lib/format';
+import { formularioSchema } from '@/lib/schemas/materialApoio';
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
@@ -34,6 +35,7 @@ export default function NovoFormularioPage() {
       fields={FIELDS}
       listHref="/material-apoio/formularios"
       defaultValues={{ categoria: 'FORMULARIO' }}
+      schema={formularioSchema}
     />
   );
 }

@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { INVESTIGACAO_TIPO_OCORRENCIA_CHOICES, INVESTIGACAO_FASE_VOO_CHOICES } from '@/lib/choices';
+import { investigacaoOutrasAutoridadesSchema } from '@/lib/schemas/materialApoio';
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
@@ -28,6 +29,7 @@ export default function EditarInvestigacaoPage() {
       title="Editar Investigação"
       fields={FIELDS}
       listHref="/material-apoio/outras-autoridades"
+      schema={investigacaoOutrasAutoridadesSchema}
     />
   );
 }

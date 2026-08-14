@@ -96,7 +96,7 @@ export default function AsyncMultiCombobox({ apiPath, value, onChange, getLabel,
       )}
       <div className="relative">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" strokeWidth={1.75} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" strokeWidth={1.75} />
           <input
             className={cn(inputClass, 'pl-9')}
             type="text"
@@ -106,19 +106,19 @@ export default function AsyncMultiCombobox({ apiPath, value, onChange, getLabel,
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             onChange={(e) => handleQueryChange(e.target.value)}
           />
-          {loading && <Spinner className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500" />}
+          {loading && <Spinner className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />}
         </div>
         {open && query.trim().length >= 2 && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-stone-200 bg-white p-1 shadow-popover dark:border-stone-800 dark:bg-stone-900">
-            {loading && <div className="px-3 py-2 text-sm text-stone-400 dark:text-stone-500">Buscando…</div>}
-            {!loading && options.length === 0 && <div className="px-3 py-2 text-sm text-stone-400 dark:text-stone-500">Nenhum resultado</div>}
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-mist-200 bg-white p-1 shadow-popover dark:border-space-700 dark:bg-space-900">
+            {loading && <div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">Buscando…</div>}
+            {!loading && options.length === 0 && <div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">Nenhum resultado</div>}
             {!loading &&
               options.map((opt) => (
                 <div
                   key={opt.id}
                   onMouseDown={() => addItem(opt)}
                   className={cn(
-                    'flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-stone-700 hover:bg-accent-50 hover:text-accent-800 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-accent-300',
+                    'flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-accent-50 hover:text-accent-800 dark:text-slate-300 dark:hover:bg-space-800 dark:hover:text-accent-300',
                     value.includes(opt.id) && 'opacity-50',
                   )}
                 >

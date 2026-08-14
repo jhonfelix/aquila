@@ -50,8 +50,8 @@ export default function TOTPSetupPage() {
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-600 text-white shadow-card">
             <ShieldCheck className="h-6 w-6" strokeWidth={2} />
           </span>
-          <h1 className="text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100">Configurar 2FA</h1>
-          <p className="text-sm text-stone-500 dark:text-stone-400">
+          <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Configurar 2FA</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Escaneie o QR code com seu aplicativo autenticador (Google Authenticator, Authy, etc.) e digite o código
             gerado para confirmar.
           </p>
@@ -63,9 +63,9 @@ export default function TOTPSetupPage() {
               <img
                 src={`data:image/png;base64,${setup.qr_b64}`}
                 alt="QR code de configuração do 2FA"
-                className="h-44 w-44 rounded-lg border border-stone-200 bg-white p-2"
+                className="h-44 w-44 rounded-lg border border-mist-200 bg-white p-2"
               />
-              <p className="break-all text-center font-mono text-xs text-stone-400 dark:text-stone-500">{setup.secret}</p>
+              <p className="break-all text-center font-mono text-xs text-slate-400 dark:text-slate-500">{setup.secret}</p>
             </div>
           )}
           <form onSubmit={handleSubmit}>

@@ -53,16 +53,16 @@ function statusTone(status: string) {
 }
 
 function ArtefatoCell({ artefatos }: { artefatos: RevisaoPainelArtefato[] }) {
-  if (artefatos.length === 0) return <span className="text-stone-400 dark:text-stone-500">-</span>;
+  if (artefatos.length === 0) return <span className="text-slate-400 dark:text-slate-500">-</span>;
   return (
     <div className="flex flex-wrap gap-2">
       {artefatos.map((a, i) => (
         <div key={i} className="group relative inline-block">
-          <span className="cursor-pointer text-stone-800 underline decoration-dotted underline-offset-4 dark:text-stone-200">
+          <span className="cursor-pointer text-slate-800 underline decoration-dotted underline-offset-4 dark:text-slate-200">
             {a.nome || 'N/A'}
           </span>
-          <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-72 rounded-lg border border-stone-200 bg-white p-3 text-xs leading-relaxed text-stone-700 opacity-0 shadow-popover transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200">
-            <div className="mb-1.5 text-sm font-semibold text-stone-900 dark:text-stone-100">{a.nome || 'N/A'}</div>
+          <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-72 rounded-lg border border-mist-200 bg-white p-3 text-xs leading-relaxed text-slate-700 opacity-0 shadow-popover transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 dark:border-space-700 dark:bg-space-800 dark:text-slate-200">
+            <div className="mb-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{a.nome || 'N/A'}</div>
             {a.tipo && (
               <div>
                 <strong>Tipo:</strong> {a.tipo}
@@ -121,22 +121,22 @@ function AcaoDropdown({ ocorrenciaId }: { ocorrenciaId: number }) {
           align="end"
           sideOffset={4}
           onClick={(e) => e.stopPropagation()}
-          className="z-50 w-56 rounded-lg border border-stone-200 bg-white py-1 shadow-popover dark:border-stone-700 dark:bg-stone-800"
+          className="z-50 w-56 rounded-lg border border-mist-200 bg-white py-1 shadow-popover dark:border-space-700 dark:bg-space-800"
         >
           <DropdownMenu.Item asChild>
             <Link
               href={`/ocorrencias/${ocorrenciaId}`}
-              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
             >
               <Pencil className="h-4 w-4" strokeWidth={1.75} />
               Editar
             </Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1 border-t border-stone-100 dark:border-stone-700" />
+          <DropdownMenu.Separator className="my-1 border-t border-mist-200 dark:border-space-700" />
           <DropdownMenu.Item asChild>
             <Link
               href={`/ocorrencias/${ocorrenciaId}/rai`}
-              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
             >
               <FileText className="h-4 w-4" strokeWidth={1.75} />
               RAI
@@ -144,14 +144,14 @@ function AcaoDropdown({ ocorrenciaId }: { ocorrenciaId: number }) {
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onClick={fakeAction}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
           >
             <Upload className="h-4 w-4" strokeWidth={1.75} />
             Upload Minuta
           </DropdownMenu.Item>
           <DropdownMenu.Item
             onClick={fakeAction}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-stone-700 outline-none transition-colors hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-700"
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
           >
             <Upload className="h-4 w-4" strokeWidth={1.75} />
             Upload de Documento Geral
@@ -234,13 +234,13 @@ export default function OcorrenciasListPage() {
     <AppShell title="Ocorrências">
       <PageContainer wide>
         <div className="mb-6">
-          <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Ocorrências</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Ocorrências</h1>
         </div>
 
-        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-card dark:border-stone-800 dark:bg-stone-900">
+        <div className="mb-4 rounded-xl border border-mist-200 bg-white p-4 shadow-card dark:border-space-700 dark:bg-space-900">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Classificação</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Classificação</label>
               <Select
                 value={filters.classificacao}
                 onChange={(v) => setFilter('classificacao', v)}
@@ -249,11 +249,11 @@ export default function OcorrenciasListPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Fase</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Fase</label>
               <Select value={filters.fase} onChange={(v) => setFilter('fase', v)} choices={FASE_CHOICES} emptyLabel="Todas" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Investigador Responsável</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Investigador Responsável</label>
               <AsyncCombobox
                 apiPath="/api/usuarios/"
                 value={filters.investigador}
@@ -263,7 +263,7 @@ export default function OcorrenciasListPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Período — de</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Período — de</label>
               <input
                 className={inputClass}
                 type="date"
@@ -272,7 +272,7 @@ export default function OcorrenciasListPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">Período — até</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Período — até</label>
               <input className={inputClass} type="date" value={filters.diaFim} onChange={(e) => setFilter('diaFim', e.target.value)} />
             </div>
           </div>
@@ -303,23 +303,23 @@ export default function OcorrenciasListPage() {
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+          <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
             <Spinner /> Carregando…
           </div>
         )}
 
         {!loading && data && (
-          <div className="overflow-visible rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
+          <div className="overflow-visible rounded-xl border border-mist-200 bg-white shadow-card dark:border-space-700 dark:bg-space-900">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/60 text-left text-xs font-medium uppercase tracking-wide text-stone-500 dark:border-stone-800 dark:bg-stone-800/40 dark:text-stone-400">
+                <tr className="border-b border-mist-200 bg-mist-100/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-space-700 dark:bg-space-800/40 dark:text-slate-400">
                   <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
                       checked={data.results.length > 0 && selected.size === data.results.length}
                       onChange={toggleAll}
                       onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4 rounded border-stone-300 text-accent-600 focus:ring-accent-500 dark:border-stone-600"
+                      className="h-4 w-4 rounded border-mist-200 text-accent-600 focus:ring-accent-500 dark:border-space-700"
                     />
                   </th>
                   <th className="px-4 py-3">ID</th>
@@ -336,34 +336,34 @@ export default function OcorrenciasListPage() {
                   <tr
                     key={oc.id}
                     onClick={() => router.push(`/ocorrencias/${oc.id}`)}
-                    className="cursor-pointer border-b border-stone-100 transition-colors last:border-0 hover:bg-accent-50/50 dark:border-stone-800 dark:hover:bg-stone-800/50"
+                    className="cursor-pointer border-b border-mist-200 transition-colors last:border-0 hover:bg-accent-50/50 dark:border-space-700 dark:hover:bg-space-800/50"
                   >
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.has(oc.id)}
                         onChange={() => toggleOne(oc.id)}
-                        className="h-4 w-4 rounded border-stone-300 text-accent-600 focus:ring-accent-500 dark:border-stone-600"
+                        className="h-4 w-4 rounded border-mist-200 text-accent-600 focus:ring-accent-500 dark:border-space-700"
                       />
                     </td>
-                    <td className="px-4 py-3 font-medium text-stone-900 dark:text-stone-100">{oc.id}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{oc.id}</td>
                     <td className="px-4 py-3">
                       <ArtefatoCell artefatos={oc.artefatos} />
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                       {oc.classificacao || '-'}
                       <br />
-                      <span className="text-xs text-stone-400 dark:text-stone-500">{oc.tipo_display || '-'}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{oc.tipo_display || '-'}</span>
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                       {oc.cidade_nome || '-'}
                       <br />
-                      <span className="text-xs text-stone-400 dark:text-stone-500">{oc.local || '-'}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{oc.local || '-'}</span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-stone-700 dark:text-stone-300">
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
                       {oc.dia ? formatShortDate(oc.dia) : '-'}
                       <br />
-                      <span className="text-xs text-stone-400 dark:text-stone-500">{oc.horario || '-'}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{oc.horario || '-'}</span>
                     </td>
                     <td className="px-4 py-3">
                       <Badge tone={statusTone(oc.status)}>{oc.status}</Badge>
@@ -375,7 +375,7 @@ export default function OcorrenciasListPage() {
                 ))}
                 {data.results.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-stone-400 dark:text-stone-500" colSpan={8}>
+                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={8}>
                       Nenhuma ocorrência encontrada para os filtros selecionados.
                     </td>
                   </tr>

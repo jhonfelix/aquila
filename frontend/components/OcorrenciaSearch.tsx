@@ -83,7 +83,7 @@ export default function OcorrenciaSearch({ collapsed, onExpand }: { collapsed: b
       {collapsed ? (
         <button
           onClick={openModal}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-mist-100 hover:text-slate-700 dark:hover:bg-space-800 dark:hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400/60"
           title="Buscar ocorrência (Ctrl+K)"
         >
           <Search className="h-4 w-4" strokeWidth={1.75} />
@@ -91,11 +91,11 @@ export default function OcorrenciaSearch({ collapsed, onExpand }: { collapsed: b
       ) : (
         <button
           onClick={openModal}
-          className="flex w-full items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 py-2 pl-3 pr-2 text-left text-sm text-slate-500 transition-colors hover:border-slate-600"
+          className="flex w-full items-center gap-2 rounded-md border border-mist-200 bg-white py-2 pl-3 pr-2 text-left text-sm text-slate-400 transition-colors hover:border-slate-400 dark:border-space-700 dark:bg-space-900 dark:text-slate-500 dark:hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400/60"
         >
           <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           <span className="flex-1">Buscar ocorrência…</span>
-          <kbd className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+          <kbd className="shrink-0 rounded border border-mist-200 bg-mist-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-500 dark:border-space-700 dark:bg-space-800 dark:text-slate-400">
             Ctrl+K
           </kbd>
         </button>
@@ -106,31 +106,31 @@ export default function OcorrenciaSearch({ collapsed, onExpand }: { collapsed: b
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60" />
           <Dialog.Content
             onOpenAutoFocus={(e) => e.preventDefault()}
-            className="fixed left-1/2 top-[12vh] z-[101] w-[92vw] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-2xl"
+            className="fixed left-1/2 top-[12vh] z-[101] w-[92vw] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border border-mist-200 bg-white shadow-2xl dark:border-space-700 dark:bg-space-900"
           >
             <Dialog.Title className="sr-only">Buscar ocorrência</Dialog.Title>
-            <div className="flex items-center gap-3 border-b border-slate-800 px-4 py-3.5">
-              <Search className="h-4 w-4 shrink-0 text-slate-500" strokeWidth={1.75} />
+            <div className="flex items-center gap-3 border-b border-mist-200 px-4 py-3.5 dark:border-space-700">
+              <Search className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.75} />
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => handleChange(e.target.value)}
                 placeholder="Buscar ocorrência por número de processo ou classificação…"
-                className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 outline-none"
+                className="flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
               />
-              <kbd className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+              <kbd className="shrink-0 rounded border border-mist-200 bg-mist-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-500 dark:border-space-700 dark:bg-space-800 dark:text-slate-400">
                 esc
               </kbd>
             </div>
 
             <div className="max-h-[60vh] overflow-y-auto p-2">
-              {loading && <div className="px-3 py-6 text-center text-sm text-slate-500">Buscando…</div>}
+              {loading && <div className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">Buscando…</div>}
               {!loading && query.trim().length >= 2 && results.length === 0 && (
-                <div className="px-3 py-6 text-center text-sm text-slate-500">Nenhum resultado</div>
+                <div className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum resultado</div>
               )}
               {!loading && query.trim().length < 2 && (
-                <div className="px-3 py-6 text-center text-sm text-slate-500">Digite ao menos 2 caracteres para buscar.</div>
+                <div className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">Digite ao menos 2 caracteres para buscar.</div>
               )}
               {!loading &&
                 results.map((oc) => (
@@ -138,23 +138,23 @@ export default function OcorrenciaSearch({ collapsed, onExpand }: { collapsed: b
                     key={oc.id}
                     onClick={() => goTo(oc.id)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-slate-800',
+                      'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-mist-100 dark:hover:bg-space-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400/60',
                     )}
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-400">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mist-100 text-slate-400 dark:bg-space-800 dark:text-slate-500">
                       <Hash className="h-3.5 w-3.5" strokeWidth={2} />
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm">
-                      <span className="font-semibold text-slate-100">{oc.numero_processo || `#${oc.id}`}</span>
-                      <span className="text-slate-500"> • Ocorrência{oc.classificacao ? ` · ${oc.classificacao}` : ''}</span>
+                      <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">{oc.numero_processo || `#${oc.id}`}</span>
+                      <span className="text-slate-500 dark:text-slate-400"> • Ocorrência{oc.classificacao ? ` · ${oc.classificacao}` : ''}</span>
                     </span>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.75} />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={1.75} />
                   </button>
                 ))}
             </div>
 
             {!loading && query.trim().length >= 2 && (
-              <div className="border-t border-slate-800 px-4 py-2.5 text-center text-xs text-slate-500">
+              <div className="border-t border-mist-200 px-4 py-2.5 text-center text-xs text-slate-500 dark:border-space-700 dark:text-slate-400">
                 {count > 0
                   ? `Encontrado${count === 1 ? '' : 's'} ${count} resultado${count === 1 ? '' : 's'}${
                       elapsed != null ? ` em ${elapsed.toFixed(2).replace('.', ',')} segundos` : ''

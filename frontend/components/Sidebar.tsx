@@ -7,14 +7,31 @@ import {
   AlertTriangle,
   BookOpen,
   ChevronDown,
+  CircleCheck,
   CircleCheckBig,
+  ClipboardList,
+  FilePlus2,
+  Files,
+  FileText,
+  FolderOpen,
+  Globe,
   Home,
+  Landmark,
+  ListChecks,
   ListTree,
   LogOut,
+  Map,
+  MapPin,
   PanelLeft,
   Pencil,
+  PlaneTakeoff,
   Rocket,
+  Satellite,
+  Scale,
   ShieldCheck,
+  Stamp,
+  User,
+  Users,
 } from 'lucide-react';
 import { apiFetch, fetchMe, hasPerm, type Me } from '@/lib/api';
 import { cn } from '@/lib/cn';
@@ -26,48 +43,65 @@ import ThemeToggle from './ThemeToggle';
 // aparecer no menu — espelha o que o backend (DjangoModelPermissionsWithView)
 // realmente exige pra fazer GET no endpoint por trás da tela. Item sem
 // `perm` fica sempre visível (ex.: telas que não dependem de um único model).
-type NavItem = { href: string; label: string; perm?: string };
+type NavItem = { href: string; label: string; icon: React.ElementType; perm?: string };
 type NavSection = { label: string; icon: React.ElementType; items: NavItem[]; disabled?: boolean };
 
-// Paleta azul-marinho/ciano fixa (não segue o toggle claro/escuro do app) —
-// pedido explícito do usuário pra igualar o visual do menu do Django Admin
-// (Unfold). Só o Sidebar usa essas cores; o resto do app mantém o tema
-// terracota/claro-escuro normal.
 const SECTIONS: NavSection[] = [
     {
     label: 'Redigir/Autenticar',
     icon: Pencil,
     items: [
-      { href: '/ocorrencias/nova', label: 'Redigir', perm: 'ocorrencia.add_ocorrenciageral' },
-      { href: '/ocorrencias/confirmar', label: 'Confirmar', perm: 'ocorrencia.view_ocorrenciageral' },
-      { href: '/ocorrencias/autenticar', label: 'Autenticar', perm: 'ocorrencia.view_ocorrenciageral' },
+      { href: '/ocorrencias/nova', label: 'Redigir', icon: FilePlus2, perm: 'ocorrencia.add_ocorrenciageral' },
+      { href: '/ocorrencias/confirmar', label: 'Confirmar', icon: CircleCheck, perm: 'ocorrencia.view_ocorrenciageral' },
+      { href: '/ocorrencias/autenticar', label: 'Autenticar', icon: Stamp, perm: 'ocorrencia.view_ocorrenciageral' },
     ],
   },
   {
     label: 'Ocorrências',
     icon: AlertTriangle,
     items: [
-      { href: '/ocorrencias', label: 'Ocorrências Gerais', perm: 'ocorrencia.view_ocorrenciageral' },
-      { href: '/ocorrencias/revisao-rf', label: 'Painel de Revisão RF', perm: 'ocorrencia.view_ocorrenciarevisaorelatorio' },
+      { href: '/ocorrencias', label: 'Ocorrências Gerais', icon: FolderOpen, perm: 'ocorrencia.view_ocorrenciageral' },
+      {
+        href: '/ocorrencias/revisao-rf',
+        label: 'Painel de Revisão RF',
+        icon: ListChecks,
+        perm: 'ocorrencia.view_ocorrenciarevisaorelatorio',
+      },
     ],
   },
   {
     label: 'Controle e gestão',
     icon: CircleCheckBig,
     items: [
-      { href: '/ocorrencias/controle-investigacao', label: 'Controle da Investigação', perm: 'ocorrencia.view_ocorrenciageral' },
+      {
+        href: '/ocorrencias/controle-investigacao',
+        label: 'Controle da Investigação',
+        icon: ClipboardList,
+        perm: 'ocorrencia.view_ocorrenciageral',
+      },
     ],
   },
   {
     label: 'Material de Apoio',
     icon: BookOpen,
     items: [
-      { href: '/material-apoio/formularios', label: 'Formulários', perm: 'material_apoio.view_formulario' },
-      { href: '/material-apoio/normas-legislacao', label: 'Normas e Legislação', perm: 'material_apoio.view_normalegislacao' },
-      { href: '/material-apoio/documentos-diversos', label: 'Documentos Diversos', perm: 'material_apoio.view_documentodiverso' },
+      { href: '/material-apoio/formularios', label: 'Formulários', icon: FileText, perm: 'material_apoio.view_formulario' },
+      {
+        href: '/material-apoio/normas-legislacao',
+        label: 'Normas e Legislação',
+        icon: Scale,
+        perm: 'material_apoio.view_normalegislacao',
+      },
+      {
+        href: '/material-apoio/documentos-diversos',
+        label: 'Documentos Diversos',
+        icon: Files,
+        perm: 'material_apoio.view_documentodiverso',
+      },
       {
         href: '/material-apoio/outras-autoridades',
         label: 'Investigações de Outras Autoridades',
+        icon: Landmark,
         perm: 'material_apoio.view_investigacaooutrasautoridades',
       },
     ],
@@ -76,20 +110,30 @@ const SECTIONS: NavSection[] = [
     label: 'Taxonomia',
     icon: ListTree,
     items: [
-      { href: '/taxonomia/paises', label: 'Países', perm: 'taxonomia.view_geografiapais' },
-      { href: '/taxonomia/ufs', label: 'UFs', perm: 'taxonomia.view_geografiauf' },
-      { href: '/taxonomia/cidades', label: 'Cidades', perm: 'taxonomia.view_geografiacidade' },
-      { href: '/taxonomia/aerodromos', label: 'Aeródromos', perm: 'taxonomia.view_aerodromogeral' },
-      { href: '/taxonomia/artefatos-espaciais', label: 'Artefatos Espaciais', perm: 'taxonomia.view_artefatoespacial' },
-      { href: '/taxonomia/veiculos-lancadores', label: 'Veículos Lançadores', perm: 'taxonomia.view_veiculolancador' },
+      { href: '/taxonomia/paises', label: 'Países', icon: Globe, perm: 'taxonomia.view_geografiapais' },
+      { href: '/taxonomia/ufs', label: 'UFs', icon: Map, perm: 'taxonomia.view_geografiauf' },
+      { href: '/taxonomia/cidades', label: 'Cidades', icon: MapPin, perm: 'taxonomia.view_geografiacidade' },
+      { href: '/taxonomia/aerodromos', label: 'Aeródromos', icon: PlaneTakeoff, perm: 'taxonomia.view_aerodromogeral' },
+      {
+        href: '/taxonomia/artefatos-espaciais',
+        label: 'Artefatos Espaciais',
+        icon: Satellite,
+        perm: 'taxonomia.view_artefatoespacial',
+      },
+      {
+        href: '/taxonomia/veiculos-lancadores',
+        label: 'Veículos Lançadores',
+        icon: Rocket,
+        perm: 'taxonomia.view_veiculolancador',
+      },
     ],
   },
   {
     label: 'Usuários & Grupos',
     icon: ShieldCheck,
     items: [
-      { href: '/usuarios', label: 'Usuários', perm: 'usuario.view_user' },
-      { href: '/grupos', label: 'Grupos', perm: 'auth.view_group' },
+      { href: '/usuarios', label: 'Usuários', icon: User, perm: 'usuario.view_user' },
+      { href: '/grupos', label: 'Grupos', icon: Users, perm: 'auth.view_group' },
     ],
   },
 ];
@@ -154,39 +198,56 @@ export default function Sidebar() {
     router.replace('/login');
   }
 
+  const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400/60';
+
   const topItemClass = (active: boolean) =>
     cn(
-      'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors',
-      active ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white',
+      'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+      focusRing,
+      active
+        ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300'
+        : 'text-slate-600 hover:bg-mist-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-space-800 dark:hover:text-slate-100',
     );
 
+  // Item ativo marcado por uma risca âmbar de 2px na borda esquerda (fita de
+  // altímetro/aba de pasta), não por um preenchimento sólido — ver plano de
+  // redesign do shell.
   const subItemClass = (active: boolean) =>
     cn(
-      'block rounded-lg py-1.5 pl-9 pr-2.5 text-sm transition-colors',
-      active ? 'bg-slate-800 font-medium text-sky-300' : 'text-slate-400 hover:bg-slate-800/70 hover:text-white',
+      'flex items-center gap-2 border-l-2 py-1.5 pl-[26px] pr-2.5 text-sm transition-colors',
+      focusRing,
+      active
+        ? 'border-accent-500 font-medium text-slate-900 dark:text-slate-100'
+        : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-100',
     );
 
   return (
     <aside
       className={cn(
-        'sticky top-0 flex h-screen shrink-0 flex-col border-r border-slate-800 bg-slate-950 transition-[width] duration-150',
+        'sticky top-0 flex h-screen shrink-0 flex-col border-r border-mist-200 bg-mist-50 transition-[width] duration-150 dark:border-space-700 dark:bg-space-950',
         collapsed ? 'w-16' : 'w-72',
       )}
     >
       <div className={cn('flex items-center px-3 pt-4', collapsed ? 'flex-col gap-1' : 'justify-between')}>
         {!collapsed && (
-          <Link href="/" className="flex items-center gap-2 px-1 text-white">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent-600 text-white">
-              <Rocket className="h-4 w-4" strokeWidth={2} />
+          <Link href="/" className={cn('flex items-center gap-2.5 rounded-md px-1 py-0.5', focusRing)}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-600 text-white shadow-card">
+              <Rocket className="h-5 w-5" strokeWidth={2} />
             </span>
-            <span className="text-lg font-semibold tracking-tight">ÁQUILA</span>
+            <span className="leading-tight">
+              <span className="block text-sm font-bold tracking-wide text-slate-900 dark:text-white">ÁQUILA</span>
+              <span className="block text-[11px] text-slate-500 dark:text-slate-400">Sistema de Gestão de Ocorrências Espaciais</span>
+            </span>
           </Link>
         )}
         <div className={cn('flex items-center gap-1', collapsed && 'flex-col')}>
-          <ThemeToggle className="text-slate-400 hover:bg-slate-800 hover:text-white" />
+          <ThemeToggle className={focusRing} />
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-mist-100 hover:text-slate-700 dark:hover:bg-space-800 dark:hover:text-slate-200',
+              focusRing,
+            )}
             title={collapsed ? 'Expandir menu' : 'Recolher menu'}
           >
             <PanelLeft className="h-4 w-4" strokeWidth={1.75} />
@@ -229,28 +290,35 @@ export default function Sidebar() {
                       disabled={section.disabled}
                       title={section.disabled ? 'Em breve' : undefined}
                       className={cn(
-                        'flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors',
+                        'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 transition-colors',
+                        focusRing,
                         section.disabled && 'cursor-default opacity-40',
                       )}
                     >
                       <span
                         className={cn(
-                          'flex items-center gap-2 text-[13px] font-medium tracking-normal',
-                          active ? 'text-sky-400' : 'text-slate-200',
+                          'flex items-center gap-2 text-xs font-semibold uppercase tracking-wide',
+                          active ? 'text-accent-600 dark:text-accent-400' : 'text-slate-500 dark:text-slate-400',
                         )}
                       >
-                        <section.icon className={cn('h-4 w-4', active ? 'text-sky-400' : 'text-slate-400')} strokeWidth={1.75} />
+                        <section.icon
+                          className={cn('h-4 w-4', active ? 'text-accent-600 dark:text-accent-400' : 'text-slate-400 dark:text-slate-500')}
+                          strokeWidth={1.75}
+                        />
                         {section.label}
                       </span>
                       {!section.disabled && (
-                        <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition-transform', open && 'rotate-180')} />
+                        <ChevronDown
+                          className={cn('h-3.5 w-3.5 text-slate-400 transition-transform dark:text-slate-500', open && 'rotate-180')}
+                        />
                       )}
                     </button>
                     {open && (
                       <div className="mt-0.5 space-y-0.5">
                         {section.items.map((item) => (
                           <Link key={item.href} href={item.href} className={subItemClass(item.href === activeHref)}>
-                            {item.label}
+                            <item.icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                            <span className="truncate">{item.label}</span>
                           </Link>
                         ))}
                       </div>
@@ -263,20 +331,24 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      <div className="border-t border-slate-800 p-3">
-        <div className={cn('flex items-center gap-2.5 rounded-lg px-1.5 py-1.5', collapsed && 'justify-center')}>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-900/40 text-sm font-semibold text-accent-300">
+      <div className="border-t border-mist-200 p-3 dark:border-space-700">
+        <div className={cn('flex items-center gap-2.5 rounded-md px-1.5 py-1.5', collapsed && 'justify-center')}>
+          {/* Tag retangular (crachá/etiqueta de evidência), não avatar circular. */}
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-100 text-xs font-semibold text-accent-700 dark:bg-accent-900/40 dark:text-accent-300">
             {(me?.nome_guerra || me?.nome || '?').charAt(0).toUpperCase()}
           </span>
           {!collapsed && (
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-white">{me ? formatUsuario(me) : '…'}</span>
-              <span className="block truncate text-xs text-slate-400">{me?.email}</span>
+              <span className="block truncate text-sm font-medium text-slate-900 dark:text-slate-100">{me ? formatUsuario(me) : '…'}</span>
+              <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{me?.email}</span>
             </span>
           )}
           <button
             onClick={handleLogout}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            className={cn(
+              'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-mist-100 hover:text-slate-700 dark:hover:bg-space-800 dark:hover:text-slate-200',
+              focusRing,
+            )}
             title="Sair"
           >
             <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />

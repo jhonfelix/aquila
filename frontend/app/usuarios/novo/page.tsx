@@ -2,6 +2,7 @@
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { POSTO_GRADUACAO_CHOICES, LOCAL_TRABALHO_CHOICES } from '@/lib/choices';
+import { usuarioCreateSchema } from '@/lib/schemas/usuarios';
 
 const FIELDS: FieldConfig[] = [
   { name: 'email', label: 'E-mail', type: 'email', required: true },
@@ -46,5 +47,14 @@ const FIELDS: FieldConfig[] = [
 ];
 
 export default function NovoUsuarioPage() {
-  return <ResourceFormPage apiPath="/api/usuarios/" title="Novo Usuário" fields={FIELDS} listHref="/usuarios" wide />;
+  return (
+    <ResourceFormPage
+      apiPath="/api/usuarios/"
+      title="Novo Usuário"
+      fields={FIELDS}
+      listHref="/usuarios"
+      wide
+      schema={usuarioCreateSchema}
+    />
+  );
 }

@@ -91,7 +91,7 @@ export default function DualListBox({
 
   if (!items) {
     return (
-      <div className="flex items-center gap-2 py-4 text-sm text-stone-400 dark:text-stone-500">
+      <div className="flex items-center gap-2 py-4 text-sm text-slate-400 dark:text-slate-500">
         <Spinner /> Carregando…
       </div>
     );
@@ -128,7 +128,7 @@ export default function DualListBox({
             onClick={() => moveToChosen(availableSelected)}
             disabled={availableSelected.length === 0}
             title="Adicionar"
-            className="rounded-md border border-stone-200 p-1.5 text-stone-500 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
+            className="rounded-md border border-mist-200 p-1.5 text-slate-500 hover:bg-mist-100 disabled:cursor-not-allowed disabled:opacity-30 dark:border-space-700 dark:text-slate-400 dark:hover:bg-space-800"
           >
             <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
           </button>
@@ -137,7 +137,7 @@ export default function DualListBox({
             onClick={() => moveToAvailable(chosenSelected)}
             disabled={chosenSelected.length === 0}
             title="Remover"
-            className="rounded-md border border-stone-200 p-1.5 text-stone-500 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
+            className="rounded-md border border-mist-200 p-1.5 text-slate-500 hover:bg-mist-100 disabled:cursor-not-allowed disabled:opacity-30 dark:border-space-700 dark:text-slate-400 dark:hover:bg-space-800"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
           </button>
@@ -155,7 +155,7 @@ export default function DualListBox({
           footer={
             chosen.length > 0 && (
               <div className="flex items-center justify-between px-2 py-1.5 text-xs">
-                <button type="button" onClick={() => setChosenSelected([])} className="text-stone-400 hover:underline dark:text-stone-500">
+                <button type="button" onClick={() => setChosenSelected([])} className="text-slate-400 hover:underline dark:text-slate-500">
                   (limpar seleção)
                 </button>
                 <button type="button" onClick={() => onChange([])} className="font-medium text-red-500 hover:underline dark:text-red-400">
@@ -166,7 +166,7 @@ export default function DualListBox({
           }
         />
       </div>
-      <p className="mt-2 text-xs text-stone-400 dark:text-stone-500">
+      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
         Pressione &quot;Control&quot;, ou &quot;Command&quot; no Mac, para selecionar mais de um. Duplo clique também move o item.
       </p>
     </div>
@@ -216,12 +216,12 @@ function ListPane({
   }
 
   return (
-    <div className="min-w-0 flex-1 rounded-lg border border-stone-200 dark:border-stone-700">
-      <div className="border-b border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stone-600 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300">
+    <div className="min-w-0 flex-1 rounded-lg border border-mist-200 dark:border-space-700">
+      <div className="border-b border-mist-200 bg-mist-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-space-700 dark:bg-space-800 dark:text-slate-300">
         {title}
       </div>
       {hint && (
-        <p className="border-b border-stone-100 px-3 py-2 text-xs text-stone-400 dark:border-stone-800 dark:text-stone-500">{hint}</p>
+        <p className="border-b border-mist-200 px-3 py-2 text-xs text-slate-400 dark:border-space-700 dark:text-slate-500">{hint}</p>
       )}
       <div className="p-2">
         <input
@@ -232,8 +232,8 @@ function ListPane({
           onChange={(e) => onFilterChange(e.target.value)}
         />
       </div>
-      <div className="h-56 overflow-y-auto border-t border-stone-100 dark:border-stone-800">
-        {items.length === 0 && <div className="px-3 py-4 text-center text-xs text-stone-400 dark:text-stone-500">Nenhum item</div>}
+      <div className="h-56 overflow-y-auto border-t border-mist-200 dark:border-space-700">
+        {items.length === 0 && <div className="px-3 py-4 text-center text-xs text-slate-400 dark:text-slate-500">Nenhum item</div>}
         {items.map((item, index) => (
           <div
             key={item.id}
@@ -243,14 +243,14 @@ function ListPane({
               'cursor-pointer select-none truncate px-3 py-1.5 text-xs',
               selectedSet.has(item.id)
                 ? 'bg-accent-500 text-white'
-                : 'text-stone-700 hover:bg-stone-50 dark:text-stone-300 dark:hover:bg-stone-800',
+                : 'text-slate-700 hover:bg-mist-100 dark:text-slate-300 dark:hover:bg-space-800',
             )}
           >
             {getLabel(item)}
           </div>
         ))}
       </div>
-      {footer && <div className="border-t border-stone-100 dark:border-stone-800">{footer}</div>}
+      {footer && <div className="border-t border-mist-200 dark:border-space-700">{footer}</div>}
     </div>
   );
 }

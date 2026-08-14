@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, History, Plus, Save, Trash2 } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { validate } from '@/lib/validation';
+import { raiFormSchema } from '@/lib/schemas/ocorrencia';
 import { formatUsuario, formatShortDate } from '@/lib/format';
 import type {
   OcorrenciaGeral,
@@ -19,7 +21,21 @@ import type {
 } from '@/lib/types';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
-import { Badge, Button, Card, Checkbox, ErrorText, Field, PageContainer, Select, Spinner, buttonClass, fileInputClass, inputClass } from '@/lib/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  ErrorText,
+  Field,
+  PageContainer,
+  Select,
+  Spinner,
+  buttonClass,
+  errorRingClass,
+  fileInputClass,
+  inputClass,
+} from '@/lib/ui';
 import { cn } from '@/lib/cn';
 import {
   RAI_PERIODO_DIA_CHOICES,
@@ -188,7 +204,7 @@ const SECTIONS = [
   { key: 'comissao', label: '15. Comissão de Investigação' },
 ] as const;
 
-function renderField(f: FieldCfg, form: Record<string, any>, set: (name: string, v: any) => void) {
+function renderField(f: FieldCfg, form: Record<string, any>, set: (name: string, v: any) => void, error?: string) {
   const value = form[f.name];
   switch (f.type) {
     case 'select':
@@ -196,27 +212,52 @@ function renderField(f: FieldCfg, form: Record<string, any>, set: (name: string,
     case 'checkbox':
       return <Checkbox checked={!!value} onChange={(v) => set(f.name, v)} />;
     case 'textarea':
-      return <textarea className={cn(inputClass, 'min-h-[80px]')} value={value ?? ''} onChange={(e) => set(f.name, e.target.value)} />;
+      return (
+        <textarea
+          className={cn(inputClass, 'min-h-[80px]', error && errorRingClass)}
+          value={value ?? ''}
+          onChange={(e) => set(f.name, e.target.value)}
+        />
+      );
     case 'number':
       return (
         <input
-          className={inputClass}
+          className={cn(inputClass, error && errorRingClass)}
           type="number"
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value === '' ? null : e.target.value)}
         />
       );
     default:
-      return <input className={inputClass} type="text" value={value ?? ''} onChange={(e) => set(f.name, e.target.value)} />;
+      return (
+        <input
+          className={cn(inputClass, error && errorRingClass)}
+          type="text"
+          value={value ?? ''}
+          onChange={(e) => set(f.name, e.target.value)}
+        />
+      );
   }
 }
 
-function FieldGrid({ fields, form, set }: { fields: FieldCfg[]; form: Record<string, any>; set: (n: string, v: any) => void }) {
+function FieldGrid({
+  fields,
+  form,
+  set,
+  errors,
+}: {
+  fields: FieldCfg[];
+  form: Record<string, any>;
+  set: (n: string, v: any) => void;
+  errors?: Record<string, string>;
+}) {
   return (
     <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
       {fields.map((f) => (
         <div key={f.name} className={f.type === 'textarea' ? 'sm:col-span-2' : undefined}>
-          <Field label={f.label}>{renderField(f, form, set)}</Field>
+          <Field label={f.label} error={errors?.[f.name]}>
+            {renderField(f, form, set, errors?.[f.name])}
+          </Field>
         </div>
       ))}
     </div>
@@ -226,15 +267,15 @@ function FieldGrid({ fields, form, set }: { fields: FieldCfg[]; form: Record<str
 function ReadOnlyRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <span className="block text-xs font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">{label}</span>
-      <span className="text-sm text-stone-700 dark:text-stone-300">{value ?? '-'}</span>
+      <span className="block text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</span>
+      <span className="text-sm text-slate-700 dark:text-slate-300">{value ?? '-'}</span>
     </div>
   );
 }
 
 function GeralReadOnlyBlock({ oc }: { oc: OcorrenciaGeral }) {
   return (
-    <div className="mb-5 grid grid-cols-2 gap-4 rounded-lg border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-800/30 sm:grid-cols-4">
+    <div className="mb-5 grid grid-cols-2 gap-4 rounded-lg border border-mist-200 bg-mist-100/60 p-4 dark:border-space-700 dark:bg-space-800/30 sm:grid-cols-4">
       <ReadOnlyRow label="Nº Processo" value={oc.numero_processo} />
       <ReadOnlyRow label="Classificação" value={oc.classificacao} />
       <ReadOnlyRow label="Data" value={oc.dia ? formatShortDate(oc.dia) : null} />
@@ -247,9 +288,9 @@ function GeralReadOnlyBlock({ oc }: { oc: OcorrenciaGeral }) {
 }
 
 function ArtefatoReadOnlyBlock({ aeronave }: { aeronave: OcorrenciaAeronave | null }) {
-  if (!aeronave) return <p className="mb-4 text-sm text-stone-400 dark:text-stone-500">Nenhum artefato espacial cadastrado ainda.</p>;
+  if (!aeronave) return <p className="mb-4 text-sm text-slate-400 dark:text-slate-500">Nenhum artefato espacial cadastrado ainda.</p>;
   return (
-    <div className="mb-5 grid grid-cols-2 gap-4 rounded-lg border border-stone-200 bg-stone-50/60 p-4 dark:border-stone-800 dark:bg-stone-800/30 sm:grid-cols-4">
+    <div className="mb-5 grid grid-cols-2 gap-4 rounded-lg border border-mist-200 bg-mist-100/60 p-4 dark:border-space-700 dark:bg-space-800/30 sm:grid-cols-4">
       <ReadOnlyRow label="Tipo" value={aeronave.tipo} />
       <ReadOnlyRow label="Operador" value={aeronave.operador} />
       <ReadOnlyRow label="Danos" value={aeronave.danos} />
@@ -259,7 +300,7 @@ function ArtefatoReadOnlyBlock({ aeronave }: { aeronave: OcorrenciaAeronave | nu
 }
 
 function SalveRaiPrimeiro() {
-  return <p className="text-sm text-stone-400 dark:text-stone-500">Salve o rascunho do RAI primeiro para habilitar esta seção.</p>;
+  return <p className="text-sm text-slate-400 dark:text-slate-500">Salve o rascunho do RAI primeiro para habilitar esta seção.</p>;
 }
 
 export default function RaiWizardPage() {
@@ -277,6 +318,7 @@ export default function RaiWizardPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const [ocData, aeronaveData, raiData] = await Promise.all([
@@ -309,6 +351,15 @@ export default function RaiWizardPage() {
 
   async function handleSave() {
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(raiFormSchema, form);
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      setError('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -372,7 +423,7 @@ export default function RaiWizardPage() {
         <PageContainer wide>
           <ErrorText>{error}</ErrorText>
           {!error && (
-            <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+            <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
               <Spinner /> Carregando…
             </div>
           )}
@@ -386,7 +437,7 @@ export default function RaiWizardPage() {
       <PageContainer wide>
         <Link
           href={`/ocorrencias/${ocorrenciaId}`}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
         >
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
           Voltar para a Ocorrência
@@ -394,7 +445,7 @@ export default function RaiWizardPage() {
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               RAI — {oc.numero_processo || `Ocorrência #${oc.id}`}
             </h1>
             {rai && <Badge tone={rai.status_rai === 'FINALIZADO' ? 'success' : 'warning'}>{rai.status_rai === 'FINALIZADO' ? 'Finalizado' : 'Rascunho'}</Badge>}
@@ -445,7 +496,7 @@ export default function RaiWizardPage() {
                   'shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-colors',
                   section === s.key
                     ? 'bg-accent-50 font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-300'
-                    : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800',
+                    : 'text-slate-600 hover:bg-mist-100 dark:text-slate-400 dark:hover:bg-space-800',
                 )}
               >
                 {s.label}
@@ -455,26 +506,26 @@ export default function RaiWizardPage() {
 
           <div className="min-w-0 flex-1">
             <Card>
-              {section === 'historico' && <FieldGrid fields={SEC_HISTORICO} form={form} set={set} />}
+              {section === 'historico' && <FieldGrid fields={SEC_HISTORICO} form={form} set={set} errors={fieldErrors} />}
               {section === 'geral' && (
                 <>
                   <GeralReadOnlyBlock oc={oc} />
-                  <FieldGrid fields={SEC_GERAL} form={form} set={set} />
+                  <FieldGrid fields={SEC_GERAL} form={form} set={set} errors={fieldErrors} />
                 </>
               )}
               {section === 'pessoal' && (rai ? <PessoalSection raiId={rai.id} setError={setError} /> : <SalveRaiPrimeiro />)}
-              {section === 'operacional' && <FieldGrid fields={SEC_OPERACIONAL} form={form} set={set} />}
+              {section === 'operacional' && <FieldGrid fields={SEC_OPERACIONAL} form={form} set={set} errors={fieldErrors} />}
               {section === 'artefato' && (
                 <>
                   <ArtefatoReadOnlyBlock aeronave={aeronave} />
-                  <FieldGrid fields={SEC_ARTEFATO} form={form} set={set} />
+                  <FieldGrid fields={SEC_ARTEFATO} form={form} set={set} errors={fieldErrors} />
                 </>
               )}
-              {section === 'instalacoes' && <FieldGrid fields={SEC_INSTALACOES} form={form} set={set} />}
-              {section === 'meteorologia' && <FieldGrid fields={SEC_METEO} form={form} set={set} />}
+              {section === 'instalacoes' && <FieldGrid fields={SEC_INSTALACOES} form={form} set={set} errors={fieldErrors} />}
+              {section === 'meteorologia' && <FieldGrid fields={SEC_METEO} form={form} set={set} errors={fieldErrors} />}
               {section === 'croqui' && (
                 <>
-                  <FieldGrid fields={SEC_CROQUI} form={form} set={set} />
+                  <FieldGrid fields={SEC_CROQUI} form={form} set={set} errors={fieldErrors} />
                   <Field label="Arquivo do Croqui">
                     {typeof form.croqui_arquivo === 'string' && form.croqui_arquivo && (
                       <a
@@ -490,12 +541,12 @@ export default function RaiWizardPage() {
                   </Field>
                 </>
               )}
-              {section === 'destrocos' && <FieldGrid fields={SEC_DESTROCOS} form={form} set={set} />}
+              {section === 'destrocos' && <FieldGrid fields={SEC_DESTROCOS} form={form} set={set} errors={fieldErrors} />}
               {section === 'fotografias' && (rai ? <FotografiasSection raiId={rai.id} setError={setError} /> : <SalveRaiPrimeiro />)}
-              {section === 'danos_terceiros' && <FieldGrid fields={SEC_DANOS_TERCEIROS} form={form} set={set} />}
-              {section === 'adicionais' && <FieldGrid fields={SEC_ADICIONAIS} form={form} set={set} />}
-              {section === 'administrativas' && <FieldGrid fields={SEC_ADMIN} form={form} set={set} />}
-              {section === 'criticas' && <FieldGrid fields={SEC_CRITICAS} form={form} set={set} />}
+              {section === 'danos_terceiros' && <FieldGrid fields={SEC_DANOS_TERCEIROS} form={form} set={set} errors={fieldErrors} />}
+              {section === 'adicionais' && <FieldGrid fields={SEC_ADICIONAIS} form={form} set={set} errors={fieldErrors} />}
+              {section === 'administrativas' && <FieldGrid fields={SEC_ADMIN} form={form} set={set} errors={fieldErrors} />}
+              {section === 'criticas' && <FieldGrid fields={SEC_CRITICAS} form={form} set={set} errors={fieldErrors} />}
               {section === 'comissao' && <ComissaoSection ocorrenciaId={ocorrenciaId} setError={setError} />}
             </Card>
           </div>
@@ -580,18 +631,18 @@ function PessoalSection({ raiId, setError }: { raiId: number; setError: (e: stri
       </Button>
 
       <div className="mt-4">
-        {itens.length === 0 && <p className="text-sm text-stone-400 dark:text-stone-500">Nenhuma pessoa cadastrada ainda.</p>}
+        {itens.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma pessoa cadastrada ainda.</p>}
         {itens.map((p) => (
-          <div key={p.id} className="flex items-center justify-between border-b border-stone-100 py-2.5 text-sm last:border-0 dark:border-stone-800">
+          <div key={p.id} className="flex items-center justify-between border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
             <div className="min-w-0">
-              <p className="truncate font-medium text-stone-800 dark:text-stone-200">{p.nome || 'Pessoa'}</p>
-              <p className="truncate text-xs text-stone-400 dark:text-stone-500">
+              <p className="truncate font-medium text-slate-800 dark:text-slate-200">{p.nome || 'Pessoa'}</p>
+              <p className="truncate text-xs text-slate-400 dark:text-slate-500">
                 {p.funcao || '-'} {p.lesoes ? `· ${LESAO_TIPO_CHOICES.find(([v]) => v === p.lesoes)?.[1] || p.lesoes}` : ''}
               </p>
             </div>
             <button
               onClick={() => handleRemove(p.id)}
-              className="ml-3 shrink-0 rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+              className="ml-3 shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
               title="Remover"
             >
               <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -681,23 +732,23 @@ function FotografiasSection({ raiId, setError }: { raiId: number; setError: (e: 
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {itens.map((f) => (
-          <div key={f.id} className="group relative overflow-hidden rounded-lg border border-stone-200 dark:border-stone-800">
+          <div key={f.id} className="group relative overflow-hidden rounded-lg border border-mist-200 dark:border-space-700">
             <a href={f.arquivo} target="_blank" rel="noreferrer">
               <img src={f.arquivo} alt={f.descricao || 'Fotografia'} className="h-28 w-full object-cover" />
             </a>
             <div className="p-2">
-              <p className="truncate text-xs text-stone-500 dark:text-stone-400">{f.numero ? `#${f.numero} ` : ''}{f.descricao || '-'}</p>
+              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{f.numero ? `#${f.numero} ` : ''}{f.descricao || '-'}</p>
             </div>
             <button
               onClick={() => handleRemove(f.id)}
-              className="absolute right-1 top-1 rounded-md bg-white/90 p-1 text-stone-500 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100 dark:bg-stone-900/90"
+              className="absolute right-1 top-1 rounded-md bg-white/90 p-1 text-slate-500 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100 dark:bg-space-900/90"
               title="Remover"
             >
               <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
           </div>
         ))}
-        {itens.length === 0 && <p className="col-span-full text-sm text-stone-400 dark:text-stone-500">Nenhuma fotografia enviada ainda.</p>}
+        {itens.length === 0 && <p className="col-span-full text-sm text-slate-400 dark:text-slate-500">Nenhuma fotografia enviada ainda.</p>}
       </div>
     </div>
   );
@@ -762,17 +813,17 @@ function ComissaoSection({ ocorrenciaId, setError }: { ocorrenciaId: number; set
   return (
     <div>
       {membros.length === 0 && (
-        <p className="text-sm text-stone-400 dark:text-stone-500">
+        <p className="text-sm text-slate-400 dark:text-slate-500">
           Nenhum membro na Comissão de Investigação ainda — cadastre na aba Gestão da ocorrência.
         </p>
       )}
       {membros.map((m) => (
-        <div key={m.id} className="flex flex-wrap items-center gap-3 border-b border-stone-100 py-3 text-sm last:border-0 dark:border-stone-800">
+        <div key={m.id} className="flex flex-wrap items-center gap-3 border-b border-mist-200 py-3 text-sm last:border-0 dark:border-space-700">
           <div className="min-w-[180px] flex-1">
-            <p className="font-medium text-stone-800 dark:text-stone-200">
+            <p className="font-medium text-slate-800 dark:text-slate-200">
               {m.investigador && investigadores[m.investigador] ? formatUsuario(investigadores[m.investigador]) : `Membro #${m.investigador ?? '-'}`}
             </p>
-            <p className="text-xs text-stone-400 dark:text-stone-500">{COMISSAO_FUNCAO_CHOICES.find(([v]) => v === m.funcao)?.[1] || m.funcao || '-'}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{COMISSAO_FUNCAO_CHOICES.find(([v]) => v === m.funcao)?.[1] || m.funcao || '-'}</p>
           </div>
           <div className="flex items-center gap-2">
             <input

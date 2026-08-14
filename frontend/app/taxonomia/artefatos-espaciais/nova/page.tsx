@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { artefatoEspacialSchema } from '@/lib/schemas/taxonomia';
 import { TIPO_ARTEFATO_CHOICES } from '@/lib/choices';
 
 const FIELDS: FieldConfig[] = [
@@ -22,6 +23,7 @@ export default function NovoArtefatoPage() {
       title="Novo Artefato Espacial"
       fields={FIELDS}
       listHref="/taxonomia/artefatos-espaciais"
+      schema={artefatoEspacialSchema}
     />
   );
 }

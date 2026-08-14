@@ -73,21 +73,21 @@ export default function AutenticarOcorrenciasPage() {
   return (
     <AppShell title="Autenticar Ocorrências">
       <PageContainer wide>
-        <h1 className="mb-6 text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Autenticar Ocorrências</h1>
+        <h1 className="mb-6 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Autenticar Ocorrências</h1>
 
         <ErrorText>{error}</ErrorText>
 
         {loading && (
-          <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+          <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
             <Spinner /> Carregando…
           </div>
         )}
 
         {!loading && data && (
-          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
+          <div className="overflow-hidden rounded-xl border border-mist-200 bg-white shadow-card dark:border-space-700 dark:bg-space-900">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/60 text-left text-xs font-medium uppercase tracking-wide text-stone-500 dark:border-stone-800 dark:bg-stone-800/40 dark:text-stone-400">
+                <tr className="border-b border-mist-200 bg-mist-100/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-space-700 dark:bg-space-800/40 dark:text-slate-400">
                   <th className="px-4 py-3">Nº Processo</th>
                   <th className="px-4 py-3">Classificação</th>
                   <th className="px-4 py-3">Tipo</th>
@@ -100,17 +100,17 @@ export default function AutenticarOcorrenciasPage() {
                 {data.results.map((oc) => (
                   <tr
                     key={oc.id}
-                    className="border-b border-stone-100 last:border-0 hover:bg-accent-50/50 dark:border-stone-800 dark:hover:bg-stone-800/50"
+                    className="border-b border-mist-200 last:border-0 hover:bg-accent-50/50 dark:border-space-700 dark:hover:bg-space-800/50"
                   >
                     <td
-                      className="cursor-pointer px-4 py-3 font-medium text-stone-900 dark:text-stone-100"
+                      className="cursor-pointer px-4 py-3 font-medium text-slate-900 dark:text-slate-100"
                       onClick={() => router.push(`/ocorrencias/${oc.id}`)}
                     >
                       {oc.numero_processo || `#${oc.id}`}
                     </td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.classificacao || '-'}</td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.tipo || '-'}</td>
-                    <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{oc.dia ? formatShortDate(oc.dia) : '-'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{oc.classificacao || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{oc.tipo || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{oc.dia ? formatShortDate(oc.dia) : '-'}</td>
                     <td className="px-4 py-3">
                       <Badge tone="accent">{oc.status}</Badge>
                     </td>
@@ -130,7 +130,7 @@ export default function AutenticarOcorrenciasPage() {
                 ))}
                 {data.results.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-stone-400 dark:text-stone-500" colSpan={6}>
+                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={6}>
                       Nenhuma ocorrência aguardando autenticação.
                     </td>
                   </tr>

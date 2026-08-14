@@ -5,7 +5,7 @@ import { FileText } from 'lucide-react';
 // Ícone de download/abrir reusado em colunas de arquivo (PDF/Word) nas
 // listas de Material de Apoio.
 export default function FileLink({ url }: { url: string | null }) {
-  if (!url) return <span className="text-stone-400 dark:text-stone-500">-</span>;
+  if (!url) return <span className="text-slate-400 dark:text-slate-500">-</span>;
   return (
     <a
       href={url}

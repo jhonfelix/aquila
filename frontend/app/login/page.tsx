@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogIn, Rocket } from 'lucide-react';
 import { apiFetch, primeCsrf, ApiError } from '@/lib/api';
-import { Button, Card, Centered, ErrorText, Field, Spinner, inputClass } from '@/lib/ui';
-import ThemeToggle from '@/components/ThemeToggle';
+import { Button, Card, ErrorText, Field, Spinner, inputClass } from '@/lib/ui';
+import Starfield from '@/components/Starfield';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,17 +40,22 @@ export default function LoginPage() {
   }
 
   return (
-    <Centered>
-      <ThemeToggle className="fixed right-4 top-4" />
-      <div className="w-full max-w-sm">
+    // `dark` fixo de propósito: a tela de login sempre usa o céu noturno do
+    // Starfield, independente do tema claro/escuro escolhido pro resto do
+    // app (que só é aplicado depois de autenticado). Como o Tailwind resolve
+    // `dark:` por ancestral com essa classe, tudo dentro (Card, inputs,
+    // Starfield) já assume a aparência escura sem precisar duplicar estilos.
+    <div className="dark relative flex min-h-screen items-center justify-center overflow-hidden p-6">
+      <Starfield />
+      <div className="relative z-10 w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-3">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-600 text-white shadow-card">
             <Rocket className="h-6 w-6" strokeWidth={2} />
           </span>
-          <h1 className="text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-100">ÁQUILA</h1>
-          <p className="text-sm text-stone-500 dark:text-stone-400">Sistema de Gestão de Ocorrências Espaciais</p>
+          <h1 className="text-lg font-semibold tracking-tight text-white">ÁQUILA</h1>
+          <p className="text-sm text-slate-400">Sistema de Gestão de Ocorrências Espaciais</p>
         </div>
-        <Card>
+        <Card className="dark:border-space-700/60 dark:bg-space-900/80 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_20px_60px_-15px_rgba(0,0,0,0.7)] dark:backdrop-blur-sm">
           <form onSubmit={handleSubmit}>
             <Field label="E-mail">
               <input
@@ -79,6 +84,6 @@ export default function LoginPage() {
           </form>
         </Card>
       </div>
-    </Centered>
+    </div>
   );
 }

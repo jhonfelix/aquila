@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { veiculoLancadorSchema } from '@/lib/schemas/taxonomia';
 import { PROPELENTE_CHOICES, TIPO_PROPULSAO_CHOICES } from '@/lib/choices';
 
 const FIELDS: FieldConfig[] = [
@@ -32,6 +33,7 @@ export default function NovoVeiculoPage() {
       title="Novo Veículo Lançador"
       fields={FIELDS}
       listHref="/taxonomia/veiculos-lancadores"
+      schema={veiculoLancadorSchema}
     />
   );
 }

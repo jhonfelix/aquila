@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { grupoSchema } from '@/lib/schemas/usuarios';
 
 const FIELDS: FieldConfig[] = [
   { name: 'name', label: 'Nome', type: 'text', required: true },
@@ -18,5 +19,7 @@ const FIELDS: FieldConfig[] = [
 ];
 
 export default function NovoGrupoPage() {
-  return <ResourceFormPage apiPath="/api/grupos/" title="Novo Grupo" fields={FIELDS} listHref="/grupos" wide />;
+  return (
+    <ResourceFormPage apiPath="/api/grupos/" title="Novo Grupo" fields={FIELDS} listHref="/grupos" wide schema={grupoSchema} />
+  );
 }

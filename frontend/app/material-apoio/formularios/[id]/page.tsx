@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
 import { MATERIAL_TIPO_DOCUMENTO_CHOICES } from '@/lib/choices';
 import { formatUsuario } from '@/lib/format';
+import { formularioSchema } from '@/lib/schemas/materialApoio';
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
@@ -36,6 +37,7 @@ export default function EditarFormularioPage() {
       title="Editar Formulário"
       fields={FIELDS}
       listHref="/material-apoio/formularios"
+      schema={formularioSchema}
     />
   );
 }

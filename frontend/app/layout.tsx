@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
 // Mesma fonte usada pelo Django Admin (tema Unfold, que carrega Inter via
@@ -8,6 +8,14 @@ import './globals.css';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+// Só para dado tabular (números de processo, timestamps, códigos) — todo o
+// resto do app (headings, labels, nav) usa a sans-serif padrão acima.
+const jbMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jbmono',
   display: 'swap',
 });
 
@@ -22,7 +30,11 @@ const themeInitScript = `(function(){try{var t=localStorage.getItem('aquila-them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jbMono.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

@@ -119,10 +119,10 @@ export default function HomePage() {
     <AppShell title="Início">
       <PageContainer wide>
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             Bem-vindo, {formatUsuario(me)}
           </h1>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{me.email}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{me.email}</p>
         </div>
 
         {hasPerm(me, 'ocorrencia.view_ocorrenciageral') && (
@@ -137,12 +137,12 @@ export default function HomePage() {
         <div className="mb-8 grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
           <CollapsibleCard title="Suas últimas atividades" className="lg:col-span-2">
             {atividades === null && (
-              <div className="flex items-center gap-2 py-6 text-sm text-stone-400 dark:text-stone-500">
+              <div className="flex items-center gap-2 py-6 text-sm text-slate-400 dark:text-slate-500">
                 <Spinner /> Carregando…
               </div>
             )}
             {atividades && atividades.length === 0 && (
-              <p className="py-2 text-sm text-stone-400 dark:text-stone-500">Nenhuma atividade registrada ainda.</p>
+              <p className="py-2 text-sm text-slate-400 dark:text-slate-500">Nenhuma atividade registrada ainda.</p>
             )}
             {atividades && atividades.length > 0 && (
               <ul className="-mx-2">
@@ -151,17 +151,17 @@ export default function HomePage() {
                   return (
                     <li
                       key={a.id}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/50"
+                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors hover:bg-mist-100 dark:hover:bg-space-800/50"
                     >
                       <ActionIcon icon={meta.icon} tone={meta.tone} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-stone-800 dark:text-stone-200">
+                        <p className="truncate text-slate-800 dark:text-slate-200">
                           <span className="font-medium">{a.action_display}</span>
-                          {a.model_verbose && <span className="text-stone-400 dark:text-stone-500"> · {a.model_verbose}</span>}
+                          {a.model_verbose && <span className="text-slate-400 dark:text-slate-500"> · {a.model_verbose}</span>}
                         </p>
-                        <p className="truncate text-xs text-stone-400 dark:text-stone-500">{a.object_repr}</p>
+                        <p className="truncate text-xs text-slate-400 dark:text-slate-500">{a.object_repr}</p>
                       </div>
-                      <span className="shrink-0 text-xs text-stone-400 dark:text-stone-500">{formatRelative(a.timestamp)}</span>
+                      <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{formatRelative(a.timestamp)}</span>
                     </li>
                   );
                 })}
@@ -172,19 +172,19 @@ export default function HomePage() {
           <CollapsibleCard title="Acesso Rápido">
             <div className="space-y-1">
               {visibleShortcuts.length === 0 && (
-                <p className="py-2 text-sm text-stone-400 dark:text-stone-500">Nenhum atalho disponível para o seu perfil.</p>
+                <p className="py-2 text-sm text-slate-400 dark:text-slate-500">Nenhum atalho disponível para o seu perfil.</p>
               )}
               {visibleShortcuts.map((s) => (
                 <Link
                   key={s.href}
                   href={s.href}
-                  className="group flex items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/50"
+                  className="group flex items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-mist-100 dark:hover:bg-space-800/50"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600 dark:bg-accent-900/40 dark:text-accent-400">
                     <s.icon className="h-4 w-4" strokeWidth={1.75} />
                   </span>
-                  <span className="min-w-0 flex-1 truncate font-medium text-stone-800 dark:text-stone-200">{s.label}</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 group-hover:text-accent-500 dark:text-stone-600" strokeWidth={2} />
+                  <span className="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-200">{s.label}</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-accent-500 dark:text-slate-600" strokeWidth={2} />
                 </Link>
               ))}
             </div>
@@ -200,8 +200,8 @@ function CollapsibleCard({ title, children, className }: { title: string; childr
   return (
     <Card className={className}>
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
-        <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
-        <ChevronDown className={cn('h-4 w-4 shrink-0 text-stone-400 transition-transform dark:text-stone-500', open && 'rotate-180')} strokeWidth={1.75} />
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        <ChevronDown className={cn('h-4 w-4 shrink-0 text-slate-400 transition-transform dark:text-slate-500', open && 'rotate-180')} strokeWidth={1.75} />
       </button>
       {open && <div className="mt-4">{children}</div>}
     </Card>
@@ -209,10 +209,10 @@ function CollapsibleCard({ title, children, className }: { title: string; childr
 }
 
 const tileToneClass: Record<string, string> = {
-  neutral: 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300',
+  neutral: 'bg-mist-100 text-slate-600 dark:bg-space-800 dark:text-slate-300',
   warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   accent: 'bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300',
-  success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  success: 'bg-mint-100 text-mint-800 dark:bg-mint-900/30 dark:text-mint-300',
 };
 
 function StatTile({
@@ -232,20 +232,20 @@ function StatTile({
         <Icon className="h-5 w-5" strokeWidth={1.75} />
       </span>
       <div className="min-w-0">
-        <p className="text-2xl font-semibold tabular-nums tracking-tight text-stone-900 dark:text-stone-100">
-          {value == null ? <Spinner className="h-5 w-5 text-stone-300 dark:text-stone-600" /> : value}
+        <p className="text-2xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-slate-100">
+          {value == null ? <Spinner className="h-5 w-5 text-slate-300 dark:text-slate-600" /> : value}
         </p>
-        <p className="truncate text-xs text-stone-500 dark:text-stone-400">{label}</p>
+        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{label}</p>
       </div>
     </Card>
   );
 }
 
 const actionIconToneClass: Record<string, string> = {
-  success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  success: 'bg-mint-100 text-mint-800 dark:bg-mint-900/30 dark:text-mint-300',
   accent: 'bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300',
   danger: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  neutral: 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300',
+  neutral: 'bg-mist-100 text-slate-600 dark:bg-space-800 dark:text-slate-300',
 };
 
 function ActionIcon({ icon: Icon, tone }: { icon: React.ElementType; tone: string }) {

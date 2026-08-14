@@ -9,8 +9,8 @@ import { cn } from '@/lib/cn';
 const toneConfig: Record<ToastItem['tone'], { icon: React.ElementType; classes: string; iconClasses: string }> = {
   success: {
     icon: CheckCircle2,
-    classes: 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300',
-    iconClasses: 'text-green-600 dark:text-green-400',
+    classes: 'border-mint-200 bg-mint-50 text-mint-800 dark:border-mint-900/50 dark:bg-mint-950/40 dark:text-mint-300',
+    iconClasses: 'text-mint-600 dark:text-mint-400',
   },
   error: {
     icon: XCircle,

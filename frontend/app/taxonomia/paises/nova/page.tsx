@@ -1,6 +1,7 @@
 'use client';
 
 import ResourceFormPage, { FieldConfig } from '@/components/crud/ResourceFormPage';
+import { paisSchema } from '@/lib/schemas/taxonomia';
 
 const FIELDS: FieldConfig[] = [
   { name: 'nome', label: 'Nome', type: 'text', required: true },
@@ -10,5 +11,13 @@ const FIELDS: FieldConfig[] = [
 ];
 
 export default function NovoPaisPage() {
-  return <ResourceFormPage apiPath="/api/taxonomia/paises/" title="Novo País" fields={FIELDS} listHref="/taxonomia/paises" />;
+  return (
+    <ResourceFormPage
+      apiPath="/api/taxonomia/paises/"
+      title="Novo País"
+      fields={FIELDS}
+      listHref="/taxonomia/paises"
+      schema={paisSchema}
+    />
+  );
 }

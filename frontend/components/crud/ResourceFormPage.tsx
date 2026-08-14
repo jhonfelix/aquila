@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { ArrowLeft, Save, Trash2, X } from 'lucide-react';
+import type { ZodType } from 'zod';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { validate } from '@/lib/validation';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
 import AsyncMultiCombobox from '@/components/AsyncMultiCombobox';
@@ -17,10 +19,10 @@ import {
   Checkbox,
   ErrorText,
   Field,
-  FieldError,
   PageContainer,
   Select,
   Spinner,
+  errorRingClass,
   fileInputClass,
   inputClass,
 } from '@/lib/ui';
@@ -49,12 +51,17 @@ type Props = {
   listHref: string;
   defaultValues?: Record<string, any>;
   wide?: boolean;
+  // Schema opcional validado contra `form` antes do POST/PATCH — evita um
+  // round-trip só pra descobrir um campo obrigatório vazio ou mal formatado;
+  // o backend continua sendo a validação de verdade (400 ainda é tratado
+  // normalmente abaixo).
+  schema?: ZodType<any>;
 };
 
 // Form genérico (create + edit + delete) reusado pelas telas CRUD
 // mecanicamente similares. Um FieldConfig[] descreve os campos; o resto
 // (auth guard, load, save, erros por campo, exclusão) é comum a todas.
-export default function ResourceFormPage({ apiPath, id, title, fields, listHref, defaultValues, wide }: Props) {
+export default function ResourceFormPage({ apiPath, id, title, fields, listHref, defaultValues, wide, schema }: Props) {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [form, setForm] = useState<Record<string, any>>(defaultValues || {});
@@ -93,9 +100,19 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
     setFieldErrors({});
+
+    if (schema) {
+      const result = validate(schema, form);
+      if (result.errors) {
+        setFieldErrors(result.errors);
+        setError('Corrija os campos destacados antes de salvar.');
+        return;
+      }
+    }
+
+    setSaving(true);
     try {
       const hasFile = Object.values(files).some((f) => f != null);
       let body: FormData | string;
@@ -167,19 +184,18 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
   return (
     <AppShell title={title}>
       <PageContainer wide={wide}>
-        <Link href={listHref} className="mb-4 inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200">
+        <Link href={listHref} className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
           Voltar
         </Link>
-        <h1 className="mb-6 text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">{title}</h1>
+        <h1 className="mb-6 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h1>
 
         <Card>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <ErrorText>{error}</ErrorText>
             {fields.map((f) => (
-              <Field key={f.name} label={f.label} hint={f.type !== 'password' ? f.helpText : undefined}>
-                {renderInput(f, form, set, files, setFiles)}
-                <FieldError>{fieldErrors[f.name]}</FieldError>
+              <Field key={f.name} label={f.label} hint={f.type !== 'password' ? f.helpText : undefined} error={fieldErrors[f.name]}>
+                {renderInput(f, form, set, files, setFiles, fieldErrors[f.name])}
               </Field>
             ))}
             <div className="mt-2 flex items-center gap-3">
@@ -196,10 +212,10 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
                     </Button>
                   </AlertDialog.Trigger>
                   <AlertDialog.Portal>
-                    <AlertDialog.Overlay className="fixed inset-0 z-40 bg-stone-900/40 dark:bg-black/60" />
-                    <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-popover dark:bg-stone-900">
-                      <AlertDialog.Title className="text-base font-semibold text-stone-900 dark:text-stone-100">Confirmar exclusão</AlertDialog.Title>
-                      <AlertDialog.Description className="mt-2 text-sm text-stone-500 dark:text-stone-400">
+                    <AlertDialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+                    <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
+                      <AlertDialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">Confirmar exclusão</AlertDialog.Title>
+                      <AlertDialog.Description className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                         Esta ação não pode ser desfeita. O registro será excluído permanentemente.
                       </AlertDialog.Description>
                       <div className="mt-6 flex justify-end gap-3">
@@ -232,11 +248,20 @@ function renderInput(
   set: (name: string, value: any) => void,
   files: Record<string, File | null>,
   setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>,
+  error?: string,
 ) {
   const value = form[f.name];
   switch (f.type) {
     case 'select':
-      return <Select value={value ?? ''} onChange={(v) => set(f.name, v)} choices={f.choices || []} required={f.required} />;
+      return (
+        <Select
+          value={value ?? ''}
+          onChange={(v) => set(f.name, v)}
+          choices={f.choices || []}
+          required={f.required}
+          className={error ? errorRingClass : undefined}
+        />
+      );
     case 'async-fk':
       return (
         <AsyncCombobox
@@ -245,6 +270,7 @@ function renderInput(
           onChange={(v) => set(f.name, v)}
           getLabel={f.fkLabel!}
           required={f.required}
+          invalid={!!error}
         />
       );
     case 'async-fk-multi':
@@ -276,7 +302,7 @@ function renderInput(
     case 'textarea':
       return (
         <textarea
-          className={cn(inputClass, 'min-h-[88px]')}
+          className={cn(inputClass, 'min-h-[88px]', error && errorRingClass)}
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value)}
           required={f.required}
@@ -285,7 +311,7 @@ function renderInput(
     case 'number':
       return (
         <input
-          className={inputClass}
+          className={cn(inputClass, error && errorRingClass)}
           type="number"
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value === '' ? null : Number(e.target.value))}
@@ -295,7 +321,7 @@ function renderInput(
     case 'date':
       return (
         <input
-          className={inputClass}
+          className={cn(inputClass, error && errorRingClass)}
           type="date"
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value)}
@@ -305,7 +331,7 @@ function renderInput(
     case 'password':
       return (
         <input
-          className={inputClass}
+          className={cn(inputClass, error && errorRingClass)}
           type="password"
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value)}
@@ -315,7 +341,7 @@ function renderInput(
     case 'email':
       return (
         <input
-          className={inputClass}
+          className={cn(inputClass, error && errorRingClass)}
           type="email"
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value)}
@@ -345,7 +371,7 @@ function renderInput(
     default:
       return (
         <input
-          className={inputClass}
+          className={cn(inputClass, error && errorRingClass)}
           type="text"
           value={value ?? ''}
           onChange={(e) => set(f.name, e.target.value)}
@@ -386,7 +412,7 @@ function JsonTagsInput({ value, onChange, choices }: { value: string[]; onChange
                 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                 value.includes(v)
                   ? 'border-accent-300 bg-accent-50 text-accent-800 dark:border-accent-800 dark:bg-accent-900/30 dark:text-accent-300'
-                  : 'border-stone-200 text-stone-500 hover:border-stone-300 dark:border-stone-700 dark:text-stone-400',
+                  : 'border-mist-200 text-slate-500 hover:border-slate-300 dark:border-space-700 dark:text-slate-400',
               )}
             >
               {label}
@@ -399,10 +425,10 @@ function JsonTagsInput({ value, onChange, choices }: { value: string[]; onChange
           {extras.map((v) => (
             <span
               key={v}
-              className="inline-flex items-center gap-1.5 rounded-md bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-300"
+              className="inline-flex items-center gap-1.5 rounded-md bg-mist-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-space-800 dark:text-slate-300"
             >
               {v}
-              <button type="button" onClick={() => toggle(v)} className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-100">
+              <button type="button" onClick={() => toggle(v)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-100">
                 <X className="h-3 w-3" strokeWidth={2} />
               </button>
             </span>

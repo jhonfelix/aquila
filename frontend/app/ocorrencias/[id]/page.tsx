@@ -6,6 +6,8 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { ChevronDown, Download, History, Trash2, Upload } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { validate } from '@/lib/validation';
+import { geralTabSchema, artefatoTabSchema, comissaoMembroSchema } from '@/lib/schemas/ocorrencia';
 import { formatUsuario, formatShortDate } from '@/lib/format';
 import type {
   OcorrenciaGeral,
@@ -27,7 +29,21 @@ import type {
 import Link from 'next/link';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
-import { Badge, Button, Card, Checkbox, ErrorText, Field, PageContainer, Select, Spinner, buttonClass, fileInputClass, inputClass } from '@/lib/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  ErrorText,
+  Field,
+  PageContainer,
+  Select,
+  Spinner,
+  buttonClass,
+  errorRingClass,
+  fileInputClass,
+  inputClass,
+} from '@/lib/ui';
 import { cn } from '@/lib/cn';
 import {
   CLASSIFICACAO_CHOICES,
@@ -58,7 +74,7 @@ const TABS = ['Geral', 'Artefato Espacial', 'Controle', 'Gestão', 'Documentos',
 type Tab = (typeof TABS)[number];
 
 const tabTriggerClass =
-  'border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-stone-500 outline-none transition-colors hover:text-stone-800 data-[state=active]:border-accent-600 data-[state=active]:text-accent-700 dark:text-stone-400 dark:hover:text-stone-200 dark:data-[state=active]:text-accent-400';
+  'border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 outline-none transition-colors hover:text-slate-800 data-[state=active]:border-accent-600 data-[state=active]:text-accent-700 dark:text-slate-400 dark:hover:text-slate-200 dark:data-[state=active]:text-accent-400';
 
 const userLabel = (u: Usuario) => formatUsuario(u);
 
@@ -93,7 +109,7 @@ export default function OcorrenciaDetailPage() {
         <PageContainer wide>
           <ErrorText>{error}</ErrorText>
           {!error && (
-            <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+            <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
               <Spinner /> Carregando…
             </div>
           )}
@@ -106,7 +122,7 @@ export default function OcorrenciaDetailPage() {
     <AppShell title={oc.numero_processo || `#${oc.id}`}>
       <PageContainer wide>
         <div className="mb-2 flex items-center justify-between">
-          <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">{oc.numero_processo || `Ocorrência #${oc.id}`}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{oc.numero_processo || `Ocorrência #${oc.id}`}</h1>
           <div className="flex items-center gap-3">
             <Link href={`/auditoria/ocorrencia.ocorrenciageral/${oc.id}`} className={buttonClass('ghost')}>
               <History className="h-4 w-4" strokeWidth={1.75} />
@@ -119,7 +135,7 @@ export default function OcorrenciaDetailPage() {
         <ErrorText>{error}</ErrorText>
 
         <Tabs.Root defaultValue="Geral">
-          <Tabs.List className="mb-5 flex flex-wrap gap-1 border-b border-stone-200 dark:border-stone-800">
+          <Tabs.List className="mb-5 flex flex-wrap gap-1 border-b border-mist-200 dark:border-space-700">
             {TABS.map((t) => (
               <Tabs.Trigger key={t} value={t} className={tabTriggerClass}>
                 {t}
@@ -174,6 +190,7 @@ function GeralTab({
 }) {
   const [form, setForm] = useState(oc);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [cadastradoPor, setCadastradoPor] = useState<Usuario | null>(null);
 
   useEffect(() => setForm(oc), [oc]);
@@ -192,6 +209,15 @@ function GeralTab({
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(geralTabSchema, form);
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      setError('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -211,7 +237,7 @@ function GeralTab({
   }
 
   return (
-    <form onSubmit={handleSave}>
+    <form onSubmit={handleSave} noValidate>
       <SectionCard title="Informações Gerais" subtitle="Informações básicas sobre a ocorrência">
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
           <ReadOnlyField label="Status da Ocorrência" value={<StatusBadge status={oc.status} />} />
@@ -224,50 +250,88 @@ function GeralTab({
           <Field label="Dia comunicação">
             <input className={inputClass} type="date" value={form.dia_comunicacao || ''} onChange={(e) => set('dia_comunicacao', e.target.value)} />
           </Field>
-          <Field label="Classificação">
-            <Select value={form.classificacao || ''} onChange={(v) => set('classificacao', v)} choices={CLASSIFICACAO_CHOICES} required />
+          <Field label="Classificação" error={fieldErrors.classificacao}>
+            <Select
+              value={form.classificacao || ''}
+              onChange={(v) => set('classificacao', v)}
+              choices={CLASSIFICACAO_CHOICES}
+              required
+              className={fieldErrors.classificacao ? errorRingClass : undefined}
+            />
           </Field>
-          <Field label="Tipo">
-            <Select value={form.tipo || ''} onChange={(v) => set('tipo', v)} choices={TIPO_OCORRENCIA_CHOICES} required />
+          <Field label="Tipo" error={fieldErrors.tipo}>
+            <Select
+              value={form.tipo || ''}
+              onChange={(v) => set('tipo', v)}
+              choices={TIPO_OCORRENCIA_CHOICES}
+              required
+              className={fieldErrors.tipo ? errorRingClass : undefined}
+            />
           </Field>
         </div>
       </SectionCard>
 
       <SectionCard title="Data e Hora" subtitle="Informações sobre data e hora da ocorrência">
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-          <Field label="Dia">
-            <input className={inputClass} type="date" value={form.dia || ''} onChange={(e) => set('dia', e.target.value)} required />
+          <Field label="Dia" error={fieldErrors.dia}>
+            <input
+              className={cn(inputClass, fieldErrors.dia && errorRingClass)}
+              type="date"
+              value={form.dia || ''}
+              onChange={(e) => set('dia', e.target.value)}
+              required
+            />
           </Field>
-          <Field label="Hora">
-            <input className={inputClass} type="time" value={form.horario || ''} onChange={(e) => set('horario', e.target.value)} required />
+          <Field label="Hora" error={fieldErrors.horario}>
+            <input
+              className={cn(inputClass, fieldErrors.horario && errorRingClass)}
+              type="time"
+              value={form.horario || ''}
+              onChange={(e) => set('horario', e.target.value)}
+              required
+            />
           </Field>
-          <Field label="Dia UTC">
-            <input className={inputClass} type="date" value={form.dia_utc || ''} onChange={(e) => set('dia_utc', e.target.value)} required />
+          <Field label="Dia UTC" error={fieldErrors.dia_utc}>
+            <input
+              className={cn(inputClass, fieldErrors.dia_utc && errorRingClass)}
+              type="date"
+              value={form.dia_utc || ''}
+              onChange={(e) => set('dia_utc', e.target.value)}
+              required
+            />
           </Field>
-          <Field label="Hora UTC">
-            <input className={inputClass} type="time" value={form.horario_utc || ''} onChange={(e) => set('horario_utc', e.target.value)} required />
+          <Field label="Hora UTC" error={fieldErrors.horario_utc}>
+            <input
+              className={cn(inputClass, fieldErrors.horario_utc && errorRingClass)}
+              type="time"
+              value={form.horario_utc || ''}
+              onChange={(e) => set('horario_utc', e.target.value)}
+              required
+            />
           </Field>
         </div>
       </SectionCard>
 
       <SectionCard title="Localização" subtitle="Informações sobre a localização da ocorrência">
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-          <Field label="Cidade">
+          <Field label="Cidade" error={fieldErrors.cidade}>
             <AsyncCombobox
               apiPath="/api/taxonomia/cidades/"
               value={form.cidade}
               onChange={(v) => set('cidade', v as number)}
               getLabel={(c: GeografiaCidade) => c.nome}
               required
+              invalid={!!fieldErrors.cidade}
             />
           </Field>
-          <Field label="Organização do segmento espacial">
+          <Field label="Organização do segmento espacial" error={fieldErrors.aerodromo}>
             <AsyncCombobox
               apiPath="/api/taxonomia/aerodromos/"
               value={form.aerodromo}
               onChange={(v) => set('aerodromo', v as number)}
               getLabel={(a: AerodromoGeral) => a.nome}
               required
+              invalid={!!fieldErrors.aerodromo}
             />
           </Field>
         </div>
@@ -324,12 +388,18 @@ function GeralTab({
       </SectionCard>
 
       <SectionCard title="Danos e Observações" subtitle="Informações sobre danos e observações gerais">
-        <Field label="Danos a Terceiros">
-          <Select value={form.danos_terceiros || ''} onChange={(v) => set('danos_terceiros', v)} choices={DANOS_TERCEIROS_CHOICES} required />
+        <Field label="Danos a Terceiros" error={fieldErrors.danos_terceiros}>
+          <Select
+            value={form.danos_terceiros || ''}
+            onChange={(v) => set('danos_terceiros', v)}
+            choices={DANOS_TERCEIROS_CHOICES}
+            required
+            className={fieldErrors.danos_terceiros ? errorRingClass : undefined}
+          />
         </Field>
-        <Field label="Histórico">
+        <Field label="Histórico" error={fieldErrors.historico}>
           <textarea
-            className={cn(inputClass, 'min-h-[100px]')}
+            className={cn(inputClass, 'min-h-[100px]', fieldErrors.historico && errorRingClass)}
             value={form.historico || ''}
             onChange={(e) => set('historico', e.target.value)}
             required
@@ -377,14 +447,14 @@ function SectionCard({
     <Card className="mb-4">
       <div className={cn('flex items-center justify-between', (open || !collapsible) && 'mb-4')}>
         <div>
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
-          {subtitle && <p className="text-xs text-stone-400 dark:text-stone-500">{subtitle}</p>}
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+          {subtitle && <p className="text-xs text-slate-400 dark:text-slate-500">{subtitle}</p>}
         </div>
         {collapsible && (
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="shrink-0 rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+            className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-mist-100 hover:text-slate-700 dark:hover:bg-space-800 dark:hover:text-slate-200"
           >
             <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} strokeWidth={1.75} />
           </button>
@@ -398,7 +468,7 @@ function SectionCard({
 function ReadOnlyField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <Field label={label}>
-      <div className={cn(inputClass, 'flex items-center bg-stone-50 text-stone-500 dark:bg-stone-800/60 dark:text-stone-400')}>
+      <div className={cn(inputClass, 'flex items-center bg-mist-100 text-slate-500 dark:bg-space-800/60 dark:text-slate-400')}>
         {value ?? '-'}
       </div>
     </Field>
@@ -411,6 +481,7 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
   const [loaded, setLoaded] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     apiFetch<Paginated<OcorrenciaAeronave>>(`/api/ocorrencia/aeronaves/?ocorrencia=${ocorrenciaId}`).then((data) => {
@@ -428,6 +499,15 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(artefatoTabSchema, form);
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      setError('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -460,22 +540,23 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
 
   if (!loaded) {
     return (
-      <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+      <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
         <Spinner /> Carregando…
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSave}>
+    <form onSubmit={handleSave} noValidate>
       <SectionCard title="Dados do Artefato Espacial">
-        <Field label="Artefato Espacial">
+        <Field label="Artefato Espacial" error={fieldErrors.artefato_espacial}>
           <AsyncCombobox
             apiPath="/api/taxonomia/veiculos-lancadores/"
             value={form.artefato_espacial ?? null}
             onChange={(v) => set('artefato_espacial', v)}
             getLabel={(v: VeiculoLancador) => `Veículo Lançador #${v.id}`}
             required
+            invalid={!!fieldErrors.artefato_espacial}
           />
         </Field>
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
@@ -695,7 +776,7 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
 
   if (!loaded) {
     return (
-      <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+      <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
         <Spinner /> Carregando…
       </div>
     );
@@ -777,6 +858,7 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
   const [observacoes, setObservacoes] = useState('');
   const [identificacaoRai, setIdentificacaoRai] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [investigadores, setInvestigadores] = useState<Record<number, Usuario>>({});
 
   const load = useCallback(() => {
@@ -812,8 +894,15 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!investigador) return;
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(comissaoMembroSchema, { investigador });
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -860,10 +949,17 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
   return (
     <div>
       <Card className="mb-4">
-        <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Adicionar Membro</h2>
-        <form onSubmit={handleAdd}>
-          <Field label="Investigador">
-            <AsyncCombobox apiPath="/api/usuarios/" value={investigador} onChange={setInvestigador} getLabel={userLabel} required />
+        <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Adicionar Membro</h2>
+        <form onSubmit={handleAdd} noValidate>
+          <Field label="Investigador" error={fieldErrors.investigador}>
+            <AsyncCombobox
+              apiPath="/api/usuarios/"
+              value={investigador}
+              onChange={setInvestigador}
+              getLabel={userLabel}
+              required
+              invalid={!!fieldErrors.investigador}
+            />
           </Field>
           <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
             <Field label="Função">
@@ -884,15 +980,15 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Comissão de Investigação</h2>
-        {membros.length === 0 && <p className="text-sm text-stone-400 dark:text-stone-500">Nenhum membro designado ainda.</p>}
+        <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Comissão de Investigação</h2>
+        {membros.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Nenhum membro designado ainda.</p>}
         {membros.map((m) => {
           const inv = m.investigador ? investigadores[m.investigador] : null;
           return (
-            <div key={m.id} className="flex items-center justify-between border-b border-stone-100 py-2.5 text-sm last:border-0 dark:border-stone-800">
+            <div key={m.id} className="flex items-center justify-between border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
               <div className="min-w-0">
-                <p className="truncate font-medium text-stone-800 dark:text-stone-200">{inv ? formatUsuario(inv) : `Investigador #${m.investigador}`}</p>
-                <p className="truncate text-xs text-stone-400 dark:text-stone-500">
+                <p className="truncate font-medium text-slate-800 dark:text-slate-200">{inv ? formatUsuario(inv) : `Investigador #${m.investigador}`}</p>
+                <p className="truncate text-xs text-slate-400 dark:text-slate-500">
                   {COMISSAO_FUNCAO_CHOICES.find(([v]) => v === m.funcao)?.[1] || m.funcao || '-'}
                   {m.observacoes ? ` · ${m.observacoes}` : ''}
                   {m.identificacao_rai ? ` · RAI: ${m.identificacao_rai}` : ''}
@@ -900,7 +996,7 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
               </div>
               <button
                 onClick={() => handleRemove(m.id)}
-                className="ml-3 shrink-0 rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                className="ml-3 shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                 title="Remover"
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -995,7 +1091,7 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
   return (
     <div>
       <Card className="mb-4">
-        <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Enviar Documento</h2>
+        <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Enviar Documento</h2>
         <form onSubmit={handleUpload}>
           <Field label="Tipo de Documento">
             <Select value={tipoDocumento} onChange={setTipoDocumento} choices={TIPO_DOCUMENTO_CHOICES} />
@@ -1011,17 +1107,17 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Documentos Anexados</h2>
-        {docs.length === 0 && <p className="text-sm text-stone-400 dark:text-stone-500">Nenhum documento anexado.</p>}
+        <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Documentos Anexados</h2>
+        {docs.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Nenhum documento anexado.</p>}
         {docs.map((d) => {
           const uploader = d.cadastrado_por_id ? uploaders[d.cadastrado_por_id] : null;
           return (
-            <div key={d.id} className="flex items-center justify-between gap-3 border-b border-stone-100 py-2.5 text-sm last:border-0 dark:border-stone-800">
+            <div key={d.id} className="flex items-center justify-between gap-3 border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
               <div className="min-w-0">
-                <p className="truncate text-stone-700 dark:text-stone-300">
+                <p className="truncate text-slate-700 dark:text-slate-300">
                   {TIPO_DOCUMENTO_CHOICES.find(([v]) => v === d.tipo_documento)?.[1] || d.tipo_documento || 'Documento'}
                 </p>
-                <p className="truncate text-xs text-stone-400 dark:text-stone-500">
+                <p className="truncate text-xs text-slate-400 dark:text-slate-500">
                   {uploader ? formatUsuario(uploader) : '-'} {d.cadastrado_em ? `· ${formatShortDate(d.cadastrado_em)}` : ''}
                 </p>
               </div>
@@ -1039,7 +1135,7 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
                 )}
                 <button
                   onClick={() => handleRemove(d.id)}
-                  className="rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                  className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                   title="Remover"
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -1106,7 +1202,7 @@ function InternacionalTab({ ocorrenciaId, setError }: { ocorrenciaId: number; se
 
   if (!loaded) {
     return (
-      <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+      <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
         <Spinner /> Carregando…
       </div>
     );
@@ -1216,7 +1312,7 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
 
   if (!loaded) {
     return (
-      <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+      <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
         <Spinner /> Carregando…
       </div>
     );
@@ -1347,7 +1443,7 @@ function RevisaoRelatorioTab({ ocorrenciaId, setError }: { ocorrenciaId: number;
   return (
     <div>
       <Card className="mb-4">
-        <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Nova Etapa de Revisão</h2>
+        <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Nova Etapa de Revisão</h2>
         <form onSubmit={handleAdd}>
           <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
             <Field label="Setor Responsável">
@@ -1376,15 +1472,15 @@ function RevisaoRelatorioTab({ ocorrenciaId, setError }: { ocorrenciaId: number;
       </Card>
 
       <Card>
-        <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Histórico de Revisões</h2>
-        {entradas.length === 0 && <p className="text-sm text-stone-400 dark:text-stone-500">Nenhuma etapa de revisão registrada.</p>}
+        <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Histórico de Revisões</h2>
+        {entradas.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma etapa de revisão registrada.</p>}
         {entradas.map((r) => (
-          <div key={r.id} className="flex items-center justify-between border-b border-stone-100 py-2.5 text-sm last:border-0 dark:border-stone-800">
+          <div key={r.id} className="flex items-center justify-between border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
             <div className="min-w-0">
-              <p className="truncate font-medium text-stone-800 dark:text-stone-200">
+              <p className="truncate font-medium text-slate-800 dark:text-slate-200">
                 {REVISAO_SETOR_CHOICES.find(([v]) => v === r.setor)?.[1] || r.setor || 'Etapa'}
               </p>
-              <p className="truncate text-xs text-stone-400 dark:text-stone-500">
+              <p className="truncate text-xs text-slate-400 dark:text-slate-500">
                 {r.data_atribuicao ? formatShortDate(r.data_atribuicao) : '-'} {r.observacao ? `· ${r.observacao}` : ''}
               </p>
             </div>
@@ -1396,7 +1492,7 @@ function RevisaoRelatorioTab({ ocorrenciaId, setError }: { ocorrenciaId: number;
               )}
               <button
                 onClick={() => handleRemove(r.id)}
-                className="rounded-md p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                 title="Remover"
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />

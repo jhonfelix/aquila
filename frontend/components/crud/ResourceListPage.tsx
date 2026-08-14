@@ -80,7 +80,7 @@ export default function ResourceListPage({
     <AppShell title={title}>
       <PageContainer wide>
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">{title}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h1>
           {createHref && (
             <Link href={createHref} className={buttonClass('primary')}>
               <Plus className="h-4 w-4" strokeWidth={2} />
@@ -90,7 +90,7 @@ export default function ResourceListPage({
         </div>
 
         <div className="relative mb-4 max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" strokeWidth={1.75} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" strokeWidth={1.75} />
           <input
             type="text"
             placeholder={searchPlaceholder || 'Buscar…'}
@@ -101,16 +101,16 @@ export default function ResourceListPage({
         </div>
 
         {loading && (
-          <div className="flex items-center gap-2 py-10 text-sm text-stone-400 dark:text-stone-500">
+          <div className="flex items-center gap-2 py-10 text-sm text-slate-400 dark:text-slate-500">
             <Spinner /> Carregando…
           </div>
         )}
 
         {!loading && data && (
-          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
+          <div className="overflow-hidden rounded-xl border border-mist-200 bg-white shadow-card dark:border-space-700 dark:bg-space-900">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-stone-200 bg-stone-50/60 text-left text-xs font-medium uppercase tracking-wide text-stone-500 dark:border-stone-800 dark:bg-stone-800/40 dark:text-stone-400">
+                <tr className="border-b border-mist-200 bg-mist-100/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-space-700 dark:bg-space-800/40 dark:text-slate-400">
                   {columns.map((c) => (
                     <th key={c.key} className="px-4 py-3">
                       {c.label}
@@ -123,10 +123,10 @@ export default function ResourceListPage({
                   <tr
                     key={item.id}
                     onClick={() => router.push(rowHref(item))}
-                    className="cursor-pointer border-b border-stone-100 transition-colors last:border-0 hover:bg-accent-50/50 dark:border-stone-800 dark:hover:bg-stone-800/50"
+                    className="cursor-pointer border-b border-mist-200 transition-colors last:border-0 hover:bg-accent-50/50 dark:border-space-700 dark:hover:bg-space-800/50"
                   >
                     {columns.map((c) => (
-                      <td key={c.key} className="px-4 py-3 text-stone-700 dark:text-stone-300">
+                      <td key={c.key} className="px-4 py-3 text-slate-700 dark:text-slate-300">
                         {c.render ? c.render(item) : item[c.key] ?? '-'}
                       </td>
                     ))}
@@ -134,7 +134,7 @@ export default function ResourceListPage({
                 ))}
                 {data.results.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-stone-400 dark:text-stone-500" colSpan={columns.length}>
+                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={columns.length}>
                       Nenhum registro encontrado.
                     </td>
                   </tr>
