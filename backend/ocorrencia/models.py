@@ -387,6 +387,7 @@ class OcorrenciaFatorContribuinte(models.Model):
 
 class OcorrenciaRecomendacao(models.Model):
     ocorrencia = models.ForeignKey(OcorrenciaGeral, on_delete=models.CASCADE, related_name='ocorrencia_recomendacao', verbose_name='Ocorrência')
+    descricao = models.TextField(verbose_name='Descrição da Recomendação')
 
     class Meta:
         ordering = ["id"]

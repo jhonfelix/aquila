@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
-import { ChevronDown, Download, History, Trash2, Upload } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { ChevronDown, Download, History, Plus, Trash2, Upload, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { validate } from '@/lib/validation';
@@ -19,6 +20,7 @@ import type {
   OcorrenciaComissao,
   OcorrenciaAsoaci,
   OcorrenciaRelatorio,
+  OcorrenciaRecomendacao,
   OcorrenciaRevisaoRelatorio,
   GeografiaCidade,
   AerodromoGeral,
@@ -165,7 +167,7 @@ export default function OcorrenciaDetailPage() {
             <DivulgacaoTab ocorrenciaId={id} setError={setError} />
           </Tabs.Content>
           <Tabs.Content value="Revisão Relatório">
-            <RevisaoRelatorioTab ocorrenciaId={id} setError={setError} />
+            <RevisaoRelatorioTab ocorrenciaId={id} />
           </Tabs.Content>
         </Tabs.Root>
       </PageContainer>
@@ -546,6 +548,34 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
     );
   }
 
+  // Seções recolhíveis cujo estado inicial depende de já haver dado
+  // preenchido — evita abrir de cara um monte de campos vazios de um
+  // artefato recém-cadastrado, mas mostra de cara quem já tem informação.
+  function hasAny(...keys: string[]) {
+    return keys.some((k) => {
+      const v = form[k];
+      return v !== null && v !== undefined && v !== '';
+    });
+  }
+  const hasCaracteristicasTecnicas = hasAny(
+    'veiculo_lancador',
+    'massa_total',
+    'dimensoes',
+    'vida_util_prevista',
+    'sistema_propulsao',
+    'sistema_controle_atitude',
+  );
+  const hasSistemasCriticos = hasAny('sistema_energia', 'sistema_comunicacao', 'sistema_navegacao', 'software_bordo');
+  const hasInformacoesColetadas = hasAny(
+    'dados_telemetria_brutos',
+    'dados_telemetria_processados',
+    'logs_eventos_falhas',
+    'ultimos_comandos_enviados',
+    'estado_subsistemas_antes_evento',
+    'dados_orbitais_antes_depois',
+    'evidencia_falha',
+  );
+
   return (
     <form onSubmit={handleSave} noValidate>
       <SectionCard title="Dados do Artefato Espacial">
@@ -583,7 +613,12 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
         </Field>
       </SectionCard>
 
-      <SectionCard title="Características Técnicas" subtitle="Informações técnicas sobre o artefato espacial">
+      <SectionCard
+        title="Características Técnicas"
+        subtitle="Informações técnicas sobre o artefato espacial"
+        collapsible
+        defaultOpen={hasCaracteristicasTecnicas}
+      >
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
           <Field label="Satélite">
             <input className={inputClass} type="text" value={form.veiculo_lancador || ''} onChange={(e) => set('veiculo_lancador', e.target.value)} />
@@ -617,7 +652,12 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
         </Field>
       </SectionCard>
 
-      <SectionCard title="Sistemas Críticos" subtitle="Informações sobre os sistemas críticos do artefato espacial">
+      <SectionCard
+        title="Sistemas Críticos"
+        subtitle="Informações sobre os sistemas críticos do artefato espacial"
+        collapsible
+        defaultOpen={hasSistemasCriticos}
+      >
         <Field label="Sistema de Energia">
           <textarea className={cn(inputClass, 'min-h-[70px]')} value={form.sistema_energia || ''} onChange={(e) => set('sistema_energia', e.target.value)} />
         </Field>
@@ -644,7 +684,7 @@ function ArtefatoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
         title="Informações Coletadas do Artefato Espacial"
         subtitle="Dados coletados do artefato e evidências de falha"
         collapsible
-        defaultOpen={false}
+        defaultOpen={hasInformacoesColetadas}
       >
         <Field label="Dados de Telemetria (brutos)">
           <textarea
@@ -784,6 +824,7 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
 
   return (
     <form onSubmit={handleSave}>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <SectionCard title="Informações de Apoio">
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
           <ReadOnlyField label="Confirmado por" value={confirmadoPor ? formatUsuario(confirmadoPor) : '-'} />
@@ -841,8 +882,9 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
         </Field>
         {controle && <ReadOnlyField label="Cadastrado em" value={controle.cadastrado_em ? formatShortDate(controle.cadastrado_em) : null} />}
       </SectionCard>
+      </div>
 
-      <Button type="submit" disabled={saving}>
+      <Button type="submit" disabled={saving} className="mt-4">
         {saving && <Spinner className="text-white" />}
         {controle ? 'Salvar' : 'Cadastrar Controle'}
       </Button>
@@ -860,6 +902,7 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [investigadores, setInvestigadores] = useState<Record<number, Usuario>>({});
+  const [open, setOpen] = useState(false);
 
   const load = useCallback(() => {
     apiFetch<Paginated<OcorrenciaComissao>>(`/api/ocorrencia/comissao/?ocorrencia=${ocorrenciaId}`).then((data) =>
@@ -920,6 +963,7 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
       setFuncao('');
       setObservacoes('');
       setIdentificacaoRai('');
+      setOpen(false);
       load();
       toast.success('Membro adicionado à comissão');
     } catch (err) {
@@ -948,36 +992,58 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
 
   return (
     <div>
-      <Card className="mb-4">
-        <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Adicionar Membro</h2>
-        <form onSubmit={handleAdd} noValidate>
-          <Field label="Investigador" error={fieldErrors.investigador}>
-            <AsyncCombobox
-              apiPath="/api/usuarios/"
-              value={investigador}
-              onChange={setInvestigador}
-              getLabel={userLabel}
-              required
-              invalid={!!fieldErrors.investigador}
-            />
-          </Field>
-          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
-            <Field label="Função">
-              <Select value={funcao} onChange={setFuncao} choices={COMISSAO_FUNCAO_CHOICES} />
-            </Field>
-            <Field label="Observações">
-              <input className={inputClass} type="text" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
-            </Field>
-            <Field label="Identificação no RAI" hint="Ex.: nº portaria">
-              <input className={inputClass} type="text" value={identificacaoRai} onChange={(e) => setIdentificacaoRai(e.target.value)} />
-            </Field>
-          </div>
-          <Button type="submit" disabled={saving || !investigador}>
-            {saving && <Spinner className="text-white" />}
-            Adicionar
-          </Button>
-        </form>
-      </Card>
+      <div className="mb-4 flex justify-end">
+        <Button type="button" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          Adicionar Membro da Comissão
+        </Button>
+      </div>
+
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
+            <div className="mb-4 flex items-center justify-between">
+              <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">Adicionar Membro</Dialog.Title>
+              <Dialog.Close className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                <X className="h-4 w-4" strokeWidth={2} />
+              </Dialog.Close>
+            </div>
+            <form onSubmit={handleAdd} noValidate>
+              <Field label="Investigador" error={fieldErrors.investigador}>
+                <AsyncCombobox
+                  apiPath="/api/usuarios/"
+                  value={investigador}
+                  onChange={setInvestigador}
+                  getLabel={userLabel}
+                  required
+                  invalid={!!fieldErrors.investigador}
+                />
+              </Field>
+              <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
+                <Field label="Função">
+                  <Select value={funcao} onChange={setFuncao} choices={COMISSAO_FUNCAO_CHOICES} />
+                </Field>
+                <Field label="Observações">
+                  <input className={inputClass} type="text" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+                </Field>
+                <Field label="Identificação no RAI" hint="Ex.: nº portaria">
+                  <input className={inputClass} type="text" value={identificacaoRai} onChange={(e) => setIdentificacaoRai(e.target.value)} />
+                </Field>
+              </div>
+              <div className="mt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={saving || !investigador}>
+                  {saving && <Spinner className="text-white" />}
+                  Adicionar
+                </Button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Comissão de Investigação</h2>
@@ -1016,6 +1082,7 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaders, setUploaders] = useState<Record<number, Usuario>>({});
+  const [open, setOpen] = useState(false);
 
   const load = useCallback(() => {
     apiFetch<Paginated<OcorrenciaDocumento>>(`/api/ocorrencia/documentos/?ocorrencia=${ocorrenciaId}`).then((data) =>
@@ -1062,6 +1129,7 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
       await apiFetch('/api/ocorrencia/documentos/', { method: 'POST', body: fd });
       setFile(null);
       setTipoDocumento('');
+      setOpen(false);
       load();
       toast.success('Documento enviado');
     } catch (err) {
@@ -1090,21 +1158,43 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
 
   return (
     <div>
-      <Card className="mb-4">
-        <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Enviar Documento</h2>
-        <form onSubmit={handleUpload}>
-          <Field label="Tipo de Documento">
-            <Select value={tipoDocumento} onChange={setTipoDocumento} choices={TIPO_DOCUMENTO_CHOICES} />
-          </Field>
-          <Field label="Arquivo">
-            <input className={fileInputClass} type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-          </Field>
-          <Button type="submit" disabled={uploading || !file}>
-            {uploading ? <Spinner className="text-white" /> : <Upload className="h-4 w-4" strokeWidth={1.75} />}
-            Enviar
-          </Button>
-        </form>
-      </Card>
+      <div className="mb-4 flex justify-end">
+        <Button type="button" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          Adicionar Documento
+        </Button>
+      </div>
+
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
+            <div className="mb-4 flex items-center justify-between">
+              <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">Enviar Documento</Dialog.Title>
+              <Dialog.Close className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                <X className="h-4 w-4" strokeWidth={2} />
+              </Dialog.Close>
+            </div>
+            <form onSubmit={handleUpload}>
+              <Field label="Tipo de Documento">
+                <Select value={tipoDocumento} onChange={setTipoDocumento} choices={TIPO_DOCUMENTO_CHOICES} />
+              </Field>
+              <Field label="Arquivo">
+                <input className={fileInputClass} type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              </Field>
+              <div className="mt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={uploading || !file}>
+                  {uploading ? <Spinner className="text-white" /> : <Upload className="h-4 w-4" strokeWidth={1.75} />}
+                  Enviar
+                </Button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Documentos Anexados</h2>
@@ -1254,6 +1344,11 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [saving, setSaving] = useState(false);
 
+  const [recomendacoes, setRecomendacoes] = useState<OcorrenciaRecomendacao[]>([]);
+  const [recomendacaoOpen, setRecomendacaoOpen] = useState(false);
+  const [descricaoRecomendacao, setDescricaoRecomendacao] = useState('');
+  const [savingRecomendacao, setSavingRecomendacao] = useState(false);
+
   useEffect(() => {
     apiFetch<Paginated<OcorrenciaRelatorio>>(`/api/ocorrencia/relatorio/?ocorrencia=${ocorrenciaId}`).then((data) => {
       const r = data.results[0] || null;
@@ -1262,6 +1357,55 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
       setLoaded(true);
     });
   }, [ocorrenciaId]);
+
+  const loadRecomendacoes = useCallback(() => {
+    apiFetch<Paginated<OcorrenciaRecomendacao>>(`/api/ocorrencia/recomendacao/?ocorrencia=${ocorrenciaId}`).then((data) =>
+      setRecomendacoes(data.results),
+    );
+  }, [ocorrenciaId]);
+
+  useEffect(() => {
+    loadRecomendacoes();
+  }, [loadRecomendacoes]);
+
+  async function handleAddRecomendacao(e: React.FormEvent) {
+    e.preventDefault();
+    if (!descricaoRecomendacao.trim()) return;
+    setError(null);
+    setSavingRecomendacao(true);
+    try {
+      await primeCsrf();
+      await apiFetch('/api/ocorrencia/recomendacao/', {
+        method: 'POST',
+        body: JSON.stringify({ ocorrencia: ocorrenciaId, descricao: descricaoRecomendacao }),
+      });
+      setDescricaoRecomendacao('');
+      setRecomendacaoOpen(false);
+      loadRecomendacoes();
+      toast.success('Recomendação adicionada');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Erro ao adicionar recomendação.';
+      setError(message);
+      toast.error('Erro ao adicionar recomendação', message);
+    } finally {
+      setSavingRecomendacao(false);
+    }
+  }
+
+  async function handleRemoveRecomendacao(id: number) {
+    if (!confirm('Remover esta recomendação?')) return;
+    setError(null);
+    try {
+      await primeCsrf();
+      await apiFetch(`/api/ocorrencia/recomendacao/${id}/`, { method: 'DELETE' });
+      loadRecomendacoes();
+      toast.success('Recomendação removida');
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Erro ao remover recomendação.';
+      setError(message);
+      toast.error('Erro ao remover recomendação', message);
+    }
+  }
 
   function set<K extends keyof OcorrenciaRelatorio>(key: K, value: OcorrenciaRelatorio[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -1319,43 +1463,107 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
   }
 
   return (
-    <form onSubmit={handleSave}>
-      <Card className="mb-4">
-        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
-          <FileField label="Relatório PT" current={form.relatorio_pt} onChange={(f) => setFiles((p) => ({ ...p, relatorio_pt: f }))} />
-          <FileField label="Relatório EN" current={form.relatorio_en} onChange={(f) => setFiles((p) => ({ ...p, relatorio_en: f }))} />
-          <FileField label="Relatório ES" current={form.relatorio_es} onChange={(f) => setFiles((p) => ({ ...p, relatorio_es: f }))} />
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <form onSubmit={handleSave}>
+        <Card className="mb-4">
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
+            <FileField label="Relatório PT" current={form.relatorio_pt} onChange={(f) => setFiles((p) => ({ ...p, relatorio_pt: f }))} />
+            <FileField label="Relatório EN" current={form.relatorio_en} onChange={(f) => setFiles((p) => ({ ...p, relatorio_en: f }))} />
+            <FileField label="Relatório ES" current={form.relatorio_es} onChange={(f) => setFiles((p) => ({ ...p, relatorio_es: f }))} />
+          </div>
+          <Field label="Publicar no site e Painel Sipae?">
+            <Checkbox checked={!!form.publicar_site_sipae} onChange={(v) => set('publicar_site_sipae', v)} />
+          </Field>
+          <Field label="Comunicar aos Elos de Coordenação" hint="Ex: DCTA e/ou RepAcred.">
+            <Select value={form.comunicar_elos || ''} onChange={(v) => set('comunicar_elos', v)} choices={RELATORIO_ELOS_CHOICES} />
+          </Field>
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
+            <Field label="Data da Assinatura">
+              <input className={inputClass} type="date" value={form.data_assinatura || ''} onChange={(e) => set('data_assinatura', e.target.value)} />
+            </Field>
+            <Field label="Data de Publicação">
+              <input className={inputClass} type="date" value={form.data_publicacao || ''} onChange={(e) => set('data_publicacao', e.target.value)} />
+            </Field>
+            <Field label="Data de Cadastro">
+              <input className={inputClass} type="date" value={form.data_cadastro || ''} onChange={(e) => set('data_cadastro', e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Observações">
+            <textarea
+              className={cn(inputClass, 'min-h-[80px]')}
+              value={form.observacoes || ''}
+              onChange={(e) => set('observacoes', e.target.value)}
+            />
+          </Field>
+        </Card>
+        <Button type="submit" disabled={saving}>
+          {saving && <Spinner className="text-white" />}
+          {relatorio ? 'Salvar' : 'Cadastrar Divulgação'}
+        </Button>
+      </form>
+
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recomendações de Segurança</h2>
+          <Button type="button" onClick={() => setRecomendacaoOpen(true)}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Adicionar Recomendação
+          </Button>
         </div>
-        <Field label="Publicar no site e Painel Sipae?">
-          <Checkbox checked={!!form.publicar_site_sipae} onChange={(v) => set('publicar_site_sipae', v)} />
-        </Field>
-        <Field label="Comunicar aos Elos de Coordenação" hint="Ex: DCTA e/ou RepAcred.">
-          <Select value={form.comunicar_elos || ''} onChange={(v) => set('comunicar_elos', v)} choices={RELATORIO_ELOS_CHOICES} />
-        </Field>
-        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
-          <Field label="Data da Assinatura">
-            <input className={inputClass} type="date" value={form.data_assinatura || ''} onChange={(e) => set('data_assinatura', e.target.value)} />
-          </Field>
-          <Field label="Data de Publicação">
-            <input className={inputClass} type="date" value={form.data_publicacao || ''} onChange={(e) => set('data_publicacao', e.target.value)} />
-          </Field>
-          <Field label="Data de Cadastro">
-            <input className={inputClass} type="date" value={form.data_cadastro || ''} onChange={(e) => set('data_cadastro', e.target.value)} />
-          </Field>
-        </div>
-        <Field label="Observações">
-          <textarea
-            className={cn(inputClass, 'min-h-[80px]')}
-            value={form.observacoes || ''}
-            onChange={(e) => set('observacoes', e.target.value)}
-          />
-        </Field>
-      </Card>
-      <Button type="submit" disabled={saving}>
-        {saving && <Spinner className="text-white" />}
-        {relatorio ? 'Salvar' : 'Cadastrar Divulgação'}
-      </Button>
-    </form>
+
+        <Card>
+          {recomendacoes.length === 0 && (
+            <p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma recomendação registrada.</p>
+          )}
+          {recomendacoes.map((r) => (
+            <div key={r.id} className="flex items-start justify-between gap-3 border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
+              <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300">{r.descricao}</p>
+              <button
+                onClick={() => handleRemoveRecomendacao(r.id)}
+                className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                title="Remover"
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </button>
+            </div>
+          ))}
+        </Card>
+      </div>
+
+      <Dialog.Root open={recomendacaoOpen} onOpenChange={setRecomendacaoOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
+            <div className="mb-4 flex items-center justify-between">
+              <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">Adicionar Recomendação</Dialog.Title>
+              <Dialog.Close className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                <X className="h-4 w-4" strokeWidth={2} />
+              </Dialog.Close>
+            </div>
+            <form onSubmit={handleAddRecomendacao}>
+              <Field label="Descrição da Recomendação">
+                <textarea
+                  className={cn(inputClass, 'min-h-[100px]')}
+                  value={descricaoRecomendacao}
+                  onChange={(e) => setDescricaoRecomendacao(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </Field>
+              <div className="mt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setRecomendacaoOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={savingRecomendacao || !descricaoRecomendacao.trim()}>
+                  {savingRecomendacao && <Spinner className="text-white" />}
+                  Adicionar
+                </Button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
   );
 }
 
@@ -1372,15 +1580,11 @@ function FileField({ label, current, onChange }: { label: string; current?: stri
   );
 }
 
-// ── Aba Revisão Relatório (Painel de Revisão RF) ──
-function RevisaoRelatorioTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError: (e: string | null) => void }) {
+// ── Aba Revisão Relatório (somente leitura — as etapas são criadas pelo
+// processo de revisão em si, no Painel de Revisão RF / Controle da
+// Investigação, não diretamente aqui) ──
+function RevisaoRelatorioTab({ ocorrenciaId }: { ocorrenciaId: number }) {
   const [entradas, setEntradas] = useState<OcorrenciaRevisaoRelatorio[]>([]);
-  const [setor, setSetor] = useState('');
-  const [revisor, setRevisor] = useState<number | null>(null);
-  const [dataAtribuicao, setDataAtribuicao] = useState('');
-  const [anexo, setAnexo] = useState<File | null>(null);
-  const [observacao, setObservacao] = useState('');
-  const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
     apiFetch<Paginated<OcorrenciaRevisaoRelatorio>>(`/api/ocorrencia/revisao-relatorio/?ocorrencia=${ocorrenciaId}`).then((data) =>
@@ -1392,115 +1596,35 @@ function RevisaoRelatorioTab({ ocorrenciaId, setError }: { ocorrenciaId: number;
     load();
   }, [load]);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSaving(true);
-    try {
-      await primeCsrf();
-      const me = await fetchMe();
-      const fd = new FormData();
-      fd.append('ocorrencia', String(ocorrenciaId));
-      if (setor) fd.append('setor', setor);
-      if (revisor) fd.append('revisor', String(revisor));
-      if (dataAtribuicao) fd.append('data_atribuicao', dataAtribuicao);
-      if (observacao) fd.append('observacao', observacao);
-      fd.append('cadastrado_em', new Date().toISOString().slice(0, 10));
-      if (me) fd.append('cadastrado_por', String(me.id));
-      if (anexo) fd.append('anexo', anexo);
-      await apiFetch('/api/ocorrencia/revisao-relatorio/', { method: 'POST', body: fd });
-      setSetor('');
-      setRevisor(null);
-      setDataAtribuicao('');
-      setAnexo(null);
-      setObservacao('');
-      load();
-      toast.success('Etapa de revisão adicionada');
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Erro ao adicionar revisão.';
-      setError(message);
-      toast.error('Erro ao adicionar revisão', message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleRemove(entryId: number) {
-    if (!confirm('Remover esta etapa de revisão?')) return;
-    setError(null);
-    try {
-      await primeCsrf();
-      await apiFetch(`/api/ocorrencia/revisao-relatorio/${entryId}/`, { method: 'DELETE' });
-      load();
-      toast.success('Etapa de revisão removida');
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Erro ao remover revisão.';
-      setError(message);
-      toast.error('Erro ao remover revisão', message);
-    }
-  }
-
   return (
-    <div>
-      <Card className="mb-4">
-        <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Nova Etapa de Revisão</h2>
-        <form onSubmit={handleAdd}>
-          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-            <Field label="Setor Responsável">
-              <Select value={setor} onChange={setSetor} choices={REVISAO_SETOR_CHOICES} />
-            </Field>
-            <Field label="Revisor Responsável">
-              <AsyncCombobox apiPath="/api/usuarios/" value={revisor} onChange={setRevisor} getLabel={userLabel} />
-            </Field>
+    <Card>
+      <h2 className="mb-1 text-sm font-semibold text-slate-900 dark:text-slate-100">Histórico de Revisões</h2>
+      <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
+        Novas etapas são criadas pelo processo de revisão (Painel de Revisão RF ou Controle da Investigação).
+      </p>
+      {entradas.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma etapa de revisão registrada.</p>}
+      {entradas.map((r) => (
+        <div key={r.id} className="flex items-center justify-between border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
+          <div className="min-w-0">
+            <p className="truncate font-medium text-slate-800 dark:text-slate-200">
+              {REVISAO_SETOR_CHOICES.find(([v]) => v === r.setor)?.[1] || r.setor || 'Etapa'}
+            </p>
+            <p className="truncate text-xs text-slate-400 dark:text-slate-500">
+              {r.data_atribuicao ? formatShortDate(r.data_atribuicao) : '-'} {r.observacao ? `· ${r.observacao}` : ''}
+            </p>
           </div>
-          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-            <Field label="Data da Atribuição">
-              <input className={inputClass} type="date" value={dataAtribuicao} onChange={(e) => setDataAtribuicao(e.target.value)} />
-            </Field>
-            <Field label="Anexo">
-              <input className={fileInputClass} type="file" onChange={(e) => setAnexo(e.target.files?.[0] || null)} />
-            </Field>
-          </div>
-          <Field label="Observação">
-            <textarea className={cn(inputClass, 'min-h-[70px]')} value={observacao} onChange={(e) => setObservacao(e.target.value)} />
-          </Field>
-          <Button type="submit" disabled={saving}>
-            {saving && <Spinner className="text-white" />}
-            Adicionar
-          </Button>
-        </form>
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">Histórico de Revisões</h2>
-        {entradas.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma etapa de revisão registrada.</p>}
-        {entradas.map((r) => (
-          <div key={r.id} className="flex items-center justify-between border-b border-mist-200 py-2.5 text-sm last:border-0 dark:border-space-700">
-            <div className="min-w-0">
-              <p className="truncate font-medium text-slate-800 dark:text-slate-200">
-                {REVISAO_SETOR_CHOICES.find(([v]) => v === r.setor)?.[1] || r.setor || 'Etapa'}
-              </p>
-              <p className="truncate text-xs text-slate-400 dark:text-slate-500">
-                {r.data_atribuicao ? formatShortDate(r.data_atribuicao) : '-'} {r.observacao ? `· ${r.observacao}` : ''}
-              </p>
-            </div>
-            <div className="ml-3 flex shrink-0 items-center gap-2">
-              {r.anexo && (
-                <a href={r.anexo} target="_blank" rel="noreferrer" className="text-accent-600 hover:underline dark:text-accent-400">
-                  <Download className="h-3.5 w-3.5" strokeWidth={1.75} />
-                </a>
-              )}
-              <button
-                onClick={() => handleRemove(r.id)}
-                className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
-                title="Remover"
-              >
-                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </Card>
-    </div>
+          {r.anexo && (
+            <a
+              href={r.anexo}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-3 shrink-0 text-accent-600 hover:underline dark:text-accent-400"
+            >
+              <Download className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </a>
+          )}
+        </div>
+      ))}
+    </Card>
   );
 }

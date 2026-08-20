@@ -187,6 +187,12 @@ export type OcorrenciaRelatorio = {
   data_cadastro: string | null;
 };
 
+export type OcorrenciaRecomendacao = {
+  id: number;
+  ocorrencia: number;
+  descricao: string;
+};
+
 export type OcorrenciaRevisaoRelatorio = {
   id: number;
   ocorrencia: number;
