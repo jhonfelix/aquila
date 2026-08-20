@@ -1,4 +1,5 @@
 import os
+from urllib.parse import quote
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, HttpResponseForbidden
@@ -24,6 +25,6 @@ def protected_media(request, path):
         raise Http404
 
     response = HttpResponse()
-    response['X-Accel-Redirect'] = f'/protected-media/{path}'
+    response['X-Accel-Redirect'] = f'/protected-media/{quote(path)}'
     response['Content-Type'] = ''
     return response
