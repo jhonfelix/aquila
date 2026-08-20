@@ -71,6 +71,7 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [removingField, setRemovingField] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMe().then((me) => {
@@ -136,6 +137,9 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
       } else {
         const payload = { ...form };
         if (id != null && 'password' in payload && !payload.password) delete payload.password;
+        for (const f of fields) {
+          if (f.type === 'file') delete payload[f.name];
+        }
         body = JSON.stringify(payload);
       }
 
@@ -161,6 +165,24 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
       toast.error('Erro ao salvar', message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleRemoveFile(name: string) {
+    if (id == null) return;
+    if (!confirm('Remover este arquivo?')) return;
+    setRemovingField(name);
+    try {
+      await primeCsrf();
+      await apiFetch(`${apiPath}${id}/`, { method: 'PATCH', body: JSON.stringify({ [name]: null }) });
+      set(name, null);
+      setFiles((prev) => ({ ...prev, [name]: null }));
+      toast.success('Arquivo removido');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao remover arquivo.';
+      toast.error('Erro ao remover arquivo', message);
+    } finally {
+      setRemovingField(null);
     }
   }
 
@@ -195,7 +217,7 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
             <ErrorText>{error}</ErrorText>
             {fields.map((f) => (
               <Field key={f.name} label={f.label} hint={f.type !== 'password' ? f.helpText : undefined} error={fieldErrors[f.name]}>
-                {renderInput(f, form, set, files, setFiles, fieldErrors[f.name])}
+                {renderInput(f, form, set, files, setFiles, fieldErrors[f.name], handleRemoveFile, removingField === f.name)}
               </Field>
             ))}
             <div className="mt-2 flex items-center gap-3">
@@ -248,7 +270,9 @@ function renderInput(
   set: (name: string, value: any) => void,
   files: Record<string, File | null>,
   setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>,
-  error?: string,
+  error: string | undefined,
+  onRemoveFile: (name: string) => void,
+  removingFile: boolean,
 ) {
   const value = form[f.name];
   switch (f.type) {
@@ -352,14 +376,25 @@ function renderInput(
       return (
         <>
           {typeof value === 'string' && value && (
-            <a
-              href={value}
-              target="_blank"
-              rel="noreferrer"
-              className="mb-1.5 block text-sm text-accent-600 underline-offset-2 hover:underline dark:text-accent-400"
-            >
-              Arquivo atual
-            </a>
+            <div className="mb-1.5 flex items-center gap-3">
+              <a
+                href={value}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-accent-600 underline-offset-2 hover:underline dark:text-accent-400"
+              >
+                Arquivo atual
+              </a>
+              <button
+                type="button"
+                onClick={() => onRemoveFile(f.name)}
+                disabled={removingFile}
+                className="inline-flex items-center gap-1 text-sm text-red-600 transition-colors hover:underline disabled:opacity-50 dark:text-red-400"
+              >
+                {removingFile ? <Spinner className="h-3.5 w-3.5" /> : <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />}
+                Remover
+              </button>
+            </div>
           )}
           <input
             className={fileInputClass}
