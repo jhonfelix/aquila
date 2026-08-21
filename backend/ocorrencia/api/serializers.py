@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from ocorrencia.models import (
@@ -7,6 +8,8 @@ from ocorrencia.models import (
     OcorrenciaApoio,
     OcorrenciaAsoaci,
     OcorrenciaAutenticacao,
+    OcorrenciaChecklistItem,
+    CHECKLIST_ETAPA1_PRAZO_DIAS,
     OcorrenciaComissao,
     OcorrenciaConfirmacao,
     OcorrenciaControle,
@@ -172,10 +175,15 @@ class OcorrenciaInvestigadaSerializer(serializers.ModelSerializer):
     investigador = serializers.SerializerMethodField()
     autenticado_em = serializers.SerializerMethodField()
     situacao_investigacao = serializers.SerializerMethodField()
+    checklist_percentual = serializers.SerializerMethodField()
+    checklist_pendencias_atrasadas = serializers.SerializerMethodField()
 
     class Meta:
         model = OcorrenciaGeral
-        fields = ['id', 'numero_processo', 'classificacao', 'dia', 'horario', 'artefatos', 'investigador', 'autenticado_em', 'situacao_investigacao']
+        fields = [
+            'id', 'numero_processo', 'classificacao', 'dia', 'horario', 'artefatos', 'investigador',
+            'autenticado_em', 'situacao_investigacao', 'checklist_percentual', 'checklist_pendencias_atrasadas',
+        ]
 
     def get_artefatos(self, obj):
         return [
@@ -204,6 +212,21 @@ class OcorrenciaInvestigadaSerializer(serializers.ModelSerializer):
         controle = obj.ocorrencia_controle.first()
         return controle.situacao_investigacao if controle else None
 
+    def get_checklist_percentual(self, obj):
+        itens = list(obj.ocorrencia_checklist_item.all())
+        if not itens:
+            return None
+        realizados = sum(1 for item in itens if item.realizado)
+        return round(realizados / len(itens) * 100)
+
+    def get_checklist_pendencias_atrasadas(self, obj):
+        itens = list(obj.ocorrencia_checklist_item.all())
+        return sum(
+            1 for item in itens
+            if item.etapa == 'COLETA_DADOS' and not item.realizado
+            and item.cadastrado_em and (timezone.now() - item.cadastrado_em).days > CHECKLIST_ETAPA1_PRAZO_DIAS
+        )
+
 
 class OcorrenciaAeronaveSerializer(serializers.ModelSerializer):
     artefato_espacial_detail = VeiculoLancadorSerializer(source='artefato_espacial', read_only=True)
@@ -223,6 +246,32 @@ class OcorrenciaComissaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = OcorrenciaComissao
         fields = '__all__'
+
+
+class OcorrenciaChecklistItemSerializer(serializers.ModelSerializer):
+    """`atrasado`: itens da etapa Coleta de Dados têm CHECKLIST_ETAPA1_PRAZO_DIAS
+    (30 dias, a partir de `cadastrado_em`) pra serem concluídos — passado esse
+    prazo sem `realizado=True`, o item vira pendência (alerta no modal e na
+    lista Controle da Investigação, via OcorrenciaInvestigadaSerializer)."""
+
+    responsavel_detail = serializers.SerializerMethodField()
+    atrasado = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OcorrenciaChecklistItem
+        fields = '__all__'
+        read_only_fields = ['padrao', 'cadastrado_em']
+
+    def get_responsavel_detail(self, obj):
+        if not obj.responsavel_id:
+            return None
+        u = obj.responsavel
+        return {'id': u.id, 'nome': u.nome, 'nome_guerra': u.nome_guerra}
+
+    def get_atrasado(self, obj):
+        if obj.etapa != 'COLETA_DADOS' or obj.realizado or not obj.cadastrado_em:
+            return False
+        return (timezone.now() - obj.cadastrado_em).days > CHECKLIST_ETAPA1_PRAZO_DIAS
 
 
 class OcorrenciaDocumentoSerializer(serializers.ModelSerializer):

@@ -29,6 +29,12 @@ export const LOCALIZACAO_TIPO_CHOICES = [
   ['EM_SOLO', 'Em solo (impacto ou destroços)'],
 ];
 
+export const CHECKLIST_ETAPA_CHOICES: [string, string][] = [
+  ['COLETA_DADOS', 'Coleta de Dados'],
+  ['ANALISE', 'Análise'],
+  ['FATOS', 'Fatos'],
+];
+
 export const ORBITA_TIPO_CHOICES = [
   ['LEO', 'LEO - Órbita Baixa da Terra'],
   ['MEO', 'MEO - Órbita Média da Terra'],

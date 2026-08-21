@@ -459,6 +459,26 @@ export type OcorrenciaInvestigada = {
   } | null;
   autenticado_em: string | null;
   situacao_investigacao: 'ATIVA' | 'FINALIZADA' | null;
+  checklist_percentual: number | null;
+  checklist_pendencias_atrasadas: number;
+};
+
+export type ChecklistEtapa = 'COLETA_DADOS' | 'ANALISE' | 'FATOS';
+
+export type OcorrenciaChecklistItem = {
+  id: number;
+  ocorrencia: number;
+  etapa: ChecklistEtapa;
+  descricao: string;
+  ordem: number;
+  padrao: boolean;
+  realizado: boolean;
+  atrasado: boolean;
+  responsavel: number | null;
+  responsavel_detail: { id: number; nome: string; nome_guerra: string | null } | null;
+  data_vinculacao: string | null;
+  comentario: string | null;
+  cadastrado_em: string;
 };
 
 export type RevisaoPainelArtefato = {

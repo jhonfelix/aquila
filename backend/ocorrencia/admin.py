@@ -1120,6 +1120,12 @@ class OcorrenciaControleAdmin(AuditlogHistoryMixin, ModelAdmin):
     list_display = ['id', 'ocorrencia']
     autocomplete_fields = ['ocorrencia']
 
+@admin.register(OcorrenciaChecklistItem)
+class OcorrenciaChecklistItemAdmin(ModelAdmin):
+    list_display = ['id', 'ocorrencia', 'etapa', 'descricao', 'realizado', 'responsavel']
+    list_filter = ['etapa', 'realizado']
+    autocomplete_fields = ['ocorrencia', 'responsavel']
+
 """@admin.register(OcorrenciaRelatorio)
 class OcorrenciaRelatorioAdmin(ModelAdmin):
     list_display = ['id', 'ocorrencia']

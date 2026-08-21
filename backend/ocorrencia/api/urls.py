@@ -25,6 +25,7 @@ router.register('aeronaves', viewsets.OcorrenciaAeronaveViewSet, basename='ocorr
 router.register('tripulantes', viewsets.OcorrenciaAeronaveTripulanteViewSet, basename='ocorrenciaaeronavetripulante')
 router.register('lesoes', viewsets.OcorrenciaAeronaveLesaoViewSet, basename='ocorrenciaaeronavelesao')
 router.register('controle', viewsets.OcorrenciaControleViewSet, basename='ocorrenciacontrole')
+router.register('checklist-item', viewsets.OcorrenciaChecklistItemViewSet, basename='ocorrenciachecklistitem')
 router.register('comissao', viewsets.OcorrenciaComissaoViewSet, basename='ocorrenciacomissao')
 router.register('documentos', viewsets.OcorrenciaDocumentoViewSet, basename='ocorrenciadocumento')
 router.register('asoaci', viewsets.OcorrenciaAsoaciViewSet, basename='ocorrenciaasoaci')

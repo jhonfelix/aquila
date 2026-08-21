@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ChevronDown, Download, FileEdit, Pencil, Search, Send, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ClipboardCheck, Download, FileEdit, Pencil, Search, Send, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { formatShortDate, formatUsuario } from '@/lib/format';
@@ -13,6 +13,7 @@ import type { OcorrenciaInvestigada, Paginated, Usuario } from '@/lib/types';
 import { REVISAO_SETOR_CHOICES } from '@/lib/choices';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
+import ChecklistInvestigacaoModal from '@/components/ChecklistInvestigacaoModal';
 import Pagination from '@/components/Pagination';
 import { Badge, Button, ErrorText, Field, PageContainer, Select, Spinner, buttonClass, fileInputClass, inputClass } from '@/lib/ui';
 import { cn } from '@/lib/cn';
@@ -20,6 +21,13 @@ import { cn } from '@/lib/cn';
 function situacaoTone(situacao: string | null) {
   if (situacao === 'FINALIZADA') return 'success' as const;
   if (situacao === 'ATIVA') return 'accent' as const;
+  return 'neutral' as const;
+}
+
+function checklistTone(pct: number | null) {
+  if (pct === null) return 'neutral' as const;
+  if (pct >= 100) return 'success' as const;
+  if (pct > 0) return 'accent' as const;
   return 'neutral' as const;
 }
 
@@ -120,7 +128,15 @@ function IniciarRevisaoModal({ ocorrencia, onClose }: { ocorrencia: OcorrenciaIn
   );
 }
 
-function AcaoDropdown({ ocorrencia, onIniciarRevisao }: { ocorrencia: OcorrenciaInvestigada; onIniciarRevisao: () => void }) {
+function AcaoDropdown({
+  ocorrencia,
+  onIniciarRevisao,
+  onChecklist,
+}: {
+  ocorrencia: OcorrenciaInvestigada;
+  onIniciarRevisao: () => void;
+  onChecklist: () => void;
+}) {
   function fakeAction() {
     toast.info('Funcionalidade ainda não implementada');
   }
@@ -161,6 +177,13 @@ function AcaoDropdown({ ocorrencia, onIniciarRevisao }: { ocorrencia: Ocorrencia
             Iniciar Processo de Revisão
           </DropdownMenu.Item>
           <DropdownMenu.Item
+            onClick={onChecklist}
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
+          >
+            <ClipboardCheck className="h-4 w-4" strokeWidth={1.75} />
+            Checklist da Investigação
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
             onClick={fakeAction}
             className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
           >
@@ -183,6 +206,8 @@ export default function ControleInvestigacaoPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [revisaoFor, setRevisaoFor] = useState<OcorrenciaInvestigada | null>(null);
+  const [checklistFor, setChecklistFor] = useState<OcorrenciaInvestigada | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     fetchMe().then((me) => {
@@ -208,7 +233,7 @@ export default function ControleInvestigacaoPage() {
     apiFetch<Paginated<OcorrenciaInvestigada>>(`/api/ocorrencia/investigadas/?${q.toString()}`)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [authChecked, search, page]);
+  }, [authChecked, search, page, refreshTick]);
 
   function toggleOne(id: number) {
     setSelected((prev) => {
@@ -292,6 +317,7 @@ export default function ControleInvestigacaoPage() {
                   <th className="px-4 py-3">Data / Hora</th>
                   <th className="px-4 py-3">Autenticado em</th>
                   <th className="px-4 py-3">Status da Investigação</th>
+                  <th className="px-4 py-3">Checklist</th>
                   <th className="px-4 py-3 text-right">Ação</th>
                 </tr>
               </thead>
@@ -332,14 +358,35 @@ export default function ControleInvestigacaoPage() {
                     <td className="px-4 py-3">
                       <Badge tone={situacaoTone(oc.situacao_investigacao)}>{oc.situacao_investigacao || '-'}</Badge>
                     </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChecklistFor(oc);
+                        }}
+                        className="flex items-center gap-1.5 hover:underline"
+                      >
+                        <Badge tone={checklistTone(oc.checklist_percentual)}>
+                          {oc.checklist_percentual === null ? '-' : `${oc.checklist_percentual}%`}
+                        </Badge>
+                        {oc.checklist_pendencias_atrasadas > 0 && (
+                          <span
+                            className="text-red-500 dark:text-red-400"
+                            title={`${oc.checklist_pendencias_atrasadas} item(ns) da Coleta de Dados atrasado(s) (prazo de 30 dias vencido)`}
+                          >
+                            <AlertTriangle className="h-4 w-4" strokeWidth={2} />
+                          </span>
+                        )}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-right">
-                      <AcaoDropdown ocorrencia={oc} onIniciarRevisao={() => setRevisaoFor(oc)} />
+                      <AcaoDropdown ocorrencia={oc} onIniciarRevisao={() => setRevisaoFor(oc)} onChecklist={() => setChecklistFor(oc)} />
                     </td>
                   </tr>
                 ))}
                 {data.results.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={8}>
+                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={9}>
                       Nenhuma ocorrência investigada encontrada.
                     </td>
                   </tr>
@@ -362,6 +409,14 @@ export default function ControleInvestigacaoPage() {
       </PageContainer>
 
       {revisaoFor && <IniciarRevisaoModal ocorrencia={revisaoFor} onClose={() => setRevisaoFor(null)} />}
+      {checklistFor && (
+        <ChecklistInvestigacaoModal
+          ocorrenciaId={checklistFor.id}
+          titulo={checklistFor.artefatos.length > 0 ? checklistFor.artefatos.map((a) => a.nome).join(', ') : `Ocorrência #${checklistFor.id}`}
+          onClose={() => setChecklistFor(null)}
+          onChanged={() => setRefreshTick((t) => t + 1)}
+        />
+      )}
     </AppShell>
   );
 }

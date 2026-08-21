@@ -18,6 +18,8 @@ from ocorrencia.models import (
     OcorrenciaRaiPessoal,
     OcorrenciaAsoaci,
     OcorrenciaAutenticacao,
+    OcorrenciaChecklistItem,
+    CHECKLIST_ITENS_PADRAO,
     OcorrenciaComissao,
     OcorrenciaConfirmacao,
     OcorrenciaControle,
@@ -291,12 +293,46 @@ class OcorrenciaInvestigadaViewSet(viewsets.ReadOnlyModelViewSet):
             'ocorrencia_autenticacao',
             'ocorrencia_controle',
             'ocorrencia_controle__investigador',
+            'ocorrencia_checklist_item',
         )
         .distinct()
         .order_by('-dia')
     )
     serializer_class = ser.OcorrenciaInvestigadaSerializer
     search_fields = ['numero_processo', 'classificacao']
+
+
+class OcorrenciaChecklistItemViewSet(_OcorrenciaChildViewSet):
+    """Checklist do processo de investigação (tela Controle da Investigação).
+    Semeado por ocorrência via `seed/` a partir de CHECKLIST_ITENS_PADRAO — depois
+    disso os itens vivem só naquela ocorrência (livre pra editar/adicionar/remover,
+    sem voltar a sincronizar com o padrão)."""
+
+    queryset = OcorrenciaChecklistItem.objects.select_related('responsavel').all()
+    serializer_class = ser.OcorrenciaChecklistItemSerializer
+    filterset_fields = ['ocorrencia', 'etapa']
+    pagination_class = None
+
+    def destroy(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.padrao:
+            return Response({'detail': 'Item padrão do checklist não pode ser excluído.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['post'])
+    def seed(self, request):
+        ocorrencia_id = request.data.get('ocorrencia')
+        if not ocorrencia_id:
+            return Response({'detail': "Informe 'ocorrencia'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not OcorrenciaChecklistItem.objects.filter(ocorrencia_id=ocorrencia_id).exists():
+            OcorrenciaChecklistItem.objects.bulk_create([
+                OcorrenciaChecklistItem(ocorrencia_id=ocorrencia_id, etapa=etapa, descricao=descricao, ordem=ordem, padrao=True)
+                for ordem, (etapa, descricao) in enumerate(CHECKLIST_ITENS_PADRAO)
+            ])
+
+        itens = OcorrenciaChecklistItem.objects.select_related('responsavel').filter(ocorrencia_id=ocorrencia_id)
+        return Response(ser.OcorrenciaChecklistItemSerializer(itens, many=True).data)
 
 
 class OcorrenciaAeronaveViewSet(_OcorrenciaChildViewSet):

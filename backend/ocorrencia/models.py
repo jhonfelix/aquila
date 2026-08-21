@@ -283,6 +283,87 @@ class OcorrenciaControle(models.Model):
     def __str__(self):
         return f"{self.ocorrencia}"
 
+class OcorrenciaChecklistItem(models.Model):
+    ocorrencia = models.ForeignKey(OcorrenciaGeral, on_delete=models.CASCADE, related_name='ocorrencia_checklist_item', verbose_name='Ocorrência')
+
+    ETAPA_CHOICES = [
+        ('COLETA_DADOS', 'Coleta de Dados'),
+        ('ANALISE', 'Análise'),
+        ('FATOS', 'Fatos'),
+    ]
+    etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, verbose_name='Etapa')
+    descricao = models.CharField(max_length=255, verbose_name='Descrição')
+    ordem = models.PositiveIntegerField(default=0, verbose_name='Ordem')
+    padrao = models.BooleanField(default=False, verbose_name='Item Padrão', help_text='Itens padrão (semeados de CHECKLIST_ITENS_PADRAO) não podem ser excluídos.')
+    realizado = models.BooleanField(default=False, verbose_name='Realizado')
+    responsavel = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+', verbose_name='Responsável')
+    data_vinculacao = models.DateField(null=True, blank=True, verbose_name='Data de Vinculação')
+    comentario = models.TextField(null=True, blank=True, verbose_name='Comentário')
+    cadastrado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['etapa', 'ordem', 'id']
+        verbose_name = 'Item de Checklist'
+        verbose_name_plural = 'Ocorrência Checklist Item'
+        db_table = 'ocorrencia_checklist_item'
+
+    def __str__(self):
+        return f"{self.get_etapa_display()} — {self.descricao}"
+
+
+# Prazo (em dias, a partir de `cadastrado_em`) para concluir os itens da etapa
+# Coleta de Dados — usado por OcorrenciaChecklistItemSerializer.get_atrasado e pelo
+# alerta de pendência na tela Controle da Investigação.
+CHECKLIST_ETAPA1_PRAZO_DIAS = 30
+
+# Checklist padrão sugerido a cada nova ocorrência (POST .../checklist-item/seed/),
+# adaptado do modelo "Ficha de Coleta de Dados" (documentos de tripulação/aeronave/
+# manutenção/empresa) para as 3 etapas do processo de investigação. Cada ocorrência
+# pode editar/remover/adicionar itens livremente depois de semeado — não há
+# sincronização de volta com esta lista.
+CHECKLIST_ITENS_PADRAO = [
+    # Etapa 1 — Coleta de Dados (documentos da tripulação + da aeronave)
+    ('COLETA_DADOS', 'Preencher Ficha de Coleta de Dados'),
+    ('COLETA_DADOS', 'Relato por escrito do ocorrido feito pelo(s) tripulante(s), quando viável'),
+    ('COLETA_DADOS', 'Certificados de cursos/treinamentos'),
+    ('COLETA_DADOS', 'Caderneta individual de voo'),
+    ('COLETA_DADOS', 'Apólice ou certificado de seguro RETA (Subparte C, 91.203, (A)(5))'),
+    ('COLETA_DADOS', 'Autorização para operações específicas (Subparte C, 91.203, (A)(9))'),
+    ('COLETA_DADOS', 'Certificado de aeronavegabilidade (Subparte C, 91.203, (A)(1))'),
+    ('COLETA_DADOS', 'Certificado de matrícula (Subparte C, 91.203, (A)(1))'),
+    ('COLETA_DADOS', 'Certificado de verificação de aeronavegabilidade (Subparte C, 91.203, (A)(7))'),
+    ('COLETA_DADOS', 'Checklist normal (Subparte C, 91.203, (A)(2))'),
+    ('COLETA_DADOS', 'Checklist de emergência (Subparte C, 91.203, (A)(2))'),
+    ('COLETA_DADOS', 'Diário de bordo (últimos 90 dias) (Subparte C, 91.203, (A)(4))'),
+    ('COLETA_DADOS', 'Ficha de peso e balanceamento (Subparte C, 91.203, (A)(12))'),
+    ('COLETA_DADOS', 'Licença de estação (Subparte C, 91.203, (A)(6))'),
+    ('COLETA_DADOS', 'Manual de voo aprovado (POH, AFM) ou manual de operação da aeronave (AOM) (Subparte A, 91.9)'),
+    ('COLETA_DADOS', 'Publicações aeronáuticas a bordo (Subparte C, 91.203, (A)(13))'),
+    # Etapa 2 — Análise (documentos relacionados à manutenção)
+    ('ANALISE', 'Caderneta de célula, todas as páginas (IS 43.9-003B)'),
+    ('ANALISE', 'Caderneta de hélice, todas as páginas (IS 43.9-003B)'),
+    ('ANALISE', 'Caderneta de motor, todas as páginas (IS 43.9-003B)'),
+    ('ANALISE', 'Ficha de cumprimento de diretrizes de aeronavegabilidade de célula, hélice e motor (IS 39-001C, 5.13)'),
+    ('ANALISE', 'Lista de equipamentos mínimos (MEL) (Subparte C, 91.213)'),
+    ('ANALISE', 'Manual de manutenção da aeronave (manual de serviço) (Subparte E, 91.403, (C))'),
+    ('ANALISE', 'Mapa de controle de diretrizes de aeronavegabilidade de célula, hélice e motor (IS 39-001C, 5.14)'),
+    ('ANALISE', 'Mapa informativo de controle de componentes de célula, hélice e motor (Subparte E, 91.417, (A)(2))'),
+    ('ANALISE', 'Nota fiscal de abastecimento de combustível (NSCA 3-13, 4.4)'),
+    ('ANALISE', 'Ordem de serviço da última CVA (IS 43.9-003B, 4.6)'),
+    ('ANALISE', 'Ordem de serviço da última inspeção de célula, hélice e motor (IS 43.9-003B, 4.6)'),
+    ('ANALISE', 'SEGVOO 001 das grandes modificações ou reparos de célula, hélice e motor (IS 43.9-001A)'),
+    ('ANALISE', 'SEGVOO 003 dos componentes instalados na célula, hélice e motor (IS 43.9-002B)'),
+    # Etapa 3 — Fatos (documentos relacionados à empresa, quando for o caso)
+    ('FATOS', 'Certificado de operador aéreo'),
+    ('FATOS', 'Especificação operativa'),
+    ('FATOS', 'Manual de gerenciamento da segurança operacional'),
+    ('FATOS', 'Manual geral da empresa'),
+    ('FATOS', 'Programa(s) de treinamento em vigor'),
+    ('FATOS', 'Ficha(s) de avaliação e registros de treinamento do(s) piloto(s)'),
+    ('FATOS', 'Registro individual do piloto (Subparte B, 135.63 (A)(4))'),
+]
+
+
 class OcorrenciaRelatorio(models.Model):
     ELOS_CHOICES = [
         ('ANAC', 'ANAC'),
