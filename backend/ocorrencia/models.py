@@ -953,11 +953,23 @@ class OcorrenciaRevisaoRelatorio(models.Model):
         return f"{self.ocorrencia}"
 
 class OcorrenciaRevisaoRelatorioFeedback(models.Model):
+    SETOR_CHOICES = [
+        ('COLETA', 'Coleta'),
+        ('ANALISE', 'Análise'),
+        ('FATOS', 'Fatos'),
+        ('CONCLUSAO', 'Conclusão'),
+    ]
+
     ocorrencia = models.ForeignKey(OcorrenciaGeral, on_delete=models.CASCADE, related_name='ocorrencia_revisao_relatorio_feedback', verbose_name='Ocorrência')
+    setor = models.CharField(max_length=20, choices=SETOR_CHOICES, null=True, blank=True, verbose_name='Área/Setor Relacionado')
+    autor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='ocorrencia_revisao_relatorio_feedback_autor', verbose_name='Autor')
+    comentario = models.TextField(verbose_name='Comentário')
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado Em')
 
     class Meta:
-        ordering = ["id"]
-        verbose_name_plural = "Ocorrência Revisão Relatório Feedback"
+        ordering = ["-criado_em", "-id"]
+        verbose_name = "Feedback do Painel de Revisão RF"
+        verbose_name_plural = "Feedback do Painel de Revisão RF"
         db_table = "ocorrencia_revisao_relatorio_feedback"
 
     def __str__(self):

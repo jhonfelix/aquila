@@ -27,6 +27,7 @@ from ocorrencia.models import (
     OcorrenciaRegistroRai,
     OcorrenciaRelatorio,
     OcorrenciaRevisaoRelatorio,
+    OcorrenciaRevisaoRelatorioFeedback,
     OcorrenciaTipoOcorrencia,
     OcorrenciaViolacao,
 )
@@ -314,6 +315,40 @@ class OcorrenciaRevisaoRelatorioSerializer(serializers.ModelSerializer):
                 'local_trabalho': u.local_trabalho,
             }
         return None
+
+
+class OcorrenciaRevisaoRelatorioFeedbackSerializer(serializers.ModelSerializer):
+    """`autor_display` expõe quem deixou o feedback, `setor_display` a área
+    relacionada — usados pela ação 'Fazer Feedback' do Painel de Revisão RF.
+
+    `setor` é opcional no model (não trava os registros de teste já
+    existentes) mas obrigatório aqui na API pra todo feedback novo."""
+
+    autor_display = serializers.SerializerMethodField()
+    setor_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OcorrenciaRevisaoRelatorioFeedback
+        fields = '__all__'
+        read_only_fields = ['autor', 'criado_em']
+        extra_kwargs = {
+            'setor': {'required': True},
+        }
+
+    def get_autor_display(self, obj):
+        if obj.autor_id:
+            u = obj.autor
+            return {
+                'id': u.id,
+                'nome': u.nome,
+                'nome_guerra': u.nome_guerra,
+                'posto_graduacao': u.posto_graduacao,
+                'local_trabalho': u.local_trabalho,
+            }
+        return None
+
+    def get_setor_display(self, obj):
+        return obj.get_setor_display() if obj.setor else None
 
 
 class OcorrenciaConfirmacaoSerializer(serializers.ModelSerializer):

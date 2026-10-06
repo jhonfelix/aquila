@@ -35,6 +35,7 @@ from ocorrencia.models import (
     OcorrenciaRegistroRai,
     OcorrenciaRelatorio,
     OcorrenciaRevisaoRelatorio,
+    OcorrenciaRevisaoRelatorioFeedback,
     OcorrenciaTipoOcorrencia,
     OcorrenciaViolacao,
 )
@@ -419,6 +420,7 @@ def _serialize_revisao_painel_row(r):
         'setor': r.setor,
         'setor_display': r.get_setor_display() if r.setor else None,
         'observacao': r.observacao,
+        'anexo': r.anexo.url if r.anexo else None,
         'artefatos': artefatos,
     }
 
@@ -431,7 +433,11 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
     @action(detail=False, methods=['get'])
     def painel(self, request):
         """Painel de Revisão RF — porta OcorrenciaRevisaoRelatorioAdmin.get_queryset
-        (admin.py:1285-1302): última revisão por ocorrência (dedup via Subquery(Max(id)))."""
+        (admin.py:1285-1302): última revisão por ocorrência (dedup via Subquery(Max(id))).
+
+        Filtros via query params — mesmo conjunto do list_filter original
+        (admin.py:1223-1228): setor, revisor, classificacao e intervalo de
+        data_atribuicao."""
         latest_ids = (
             OcorrenciaRevisaoRelatorio.objects
             .values('ocorrencia_id')
@@ -447,8 +453,24 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
                 'ocorrencia__ocorrencia_aeronave__artefato_espacial',
                 'ocorrencia__ocorrencia_controle',
             )
-            .order_by('-data_atribuicao', '-id')
         )
+        setor = request.query_params.get('setor')
+        if setor:
+            rows = rows.filter(setor=setor)
+        revisor = request.query_params.get('revisor')
+        if revisor:
+            rows = rows.filter(revisor_id=revisor)
+        classificacao = request.query_params.get('classificacao')
+        if classificacao:
+            rows = rows.filter(ocorrencia__classificacao=classificacao)
+        data_inicio = request.query_params.get('data_inicio')
+        if data_inicio:
+            rows = rows.filter(data_atribuicao__gte=data_inicio)
+        data_fim = request.query_params.get('data_fim')
+        if data_fim:
+            rows = rows.filter(data_atribuicao__lte=data_fim)
+
+        rows = rows.order_by('-data_atribuicao', '-id')
         page = self.paginate_queryset(rows)
         if page is not None:
             return self.get_paginated_response([_serialize_revisao_painel_row(r) for r in page])
@@ -467,3 +489,14 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
             .order_by('-data_atribuicao', '-id')
         )
         return Response(ser.OcorrenciaRevisaoRelatorioSerializer(rows, many=True).data)
+
+
+class OcorrenciaRevisaoRelatorioFeedbackViewSet(_OcorrenciaChildViewSet):
+    """Comentários/parecer sobre a revisão em andamento — ação 'Fazer Feedback'
+    do Painel de Revisão RF. `autor` é sempre o usuário logado (perform_create)."""
+
+    queryset = OcorrenciaRevisaoRelatorioFeedback.objects.select_related('autor').all()
+    serializer_class = ser.OcorrenciaRevisaoRelatorioFeedbackSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(autor=self.request.user)

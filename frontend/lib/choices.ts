@@ -193,6 +193,13 @@ export const REVISAO_SETOR_CHOICES = [
   ['REABERTURA', 'Reabertura'],
 ];
 
+export const FEEDBACK_SETOR_CHOICES = [
+  ['COLETA', 'Coleta'],
+  ['ANALISE', 'Análise'],
+  ['FATOS', 'Fatos'],
+  ['CONCLUSAO', 'Conclusão'],
+];
+
 export const TIPO_DOCUMENTO_CHOICES = [
   ['ARTEFATO_MAPA_COMPONENTES', 'Artefato Espacial - Mapa de Componentes'],
   ['ARTEFATO_SISTEMAS_SUBSISTEMAS', 'Artefato Espacial - Sistemas e Subsistemas'],

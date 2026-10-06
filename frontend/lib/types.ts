@@ -212,6 +212,23 @@ export type OcorrenciaRevisaoRelatorio = {
   cadastrado_em: string | null;
 };
 
+export type OcorrenciaRevisaoRelatorioFeedback = {
+  id: number;
+  ocorrencia: number;
+  setor: string | null;
+  setor_display: string | null;
+  autor: number | null;
+  autor_display: {
+    id: number;
+    nome: string;
+    nome_guerra: string | null;
+    posto_graduacao: string | null;
+    local_trabalho: string | null;
+  } | null;
+  comentario: string;
+  criado_em: string;
+};
+
 export type ArtefatoEspacial = {
   id: number;
   designacao: string;
@@ -502,6 +519,7 @@ export type RevisaoPainelRow = {
   setor: string | null;
   setor_display: string | null;
   observacao: string | null;
+  anexo: string | null;
   artefatos: RevisaoPainelArtefato[];
 };
 

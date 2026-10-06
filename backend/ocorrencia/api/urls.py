@@ -31,6 +31,7 @@ router.register('documentos', viewsets.OcorrenciaDocumentoViewSet, basename='oco
 router.register('asoaci', viewsets.OcorrenciaAsoaciViewSet, basename='ocorrenciaasoaci')
 router.register('relatorio', viewsets.OcorrenciaRelatorioViewSet, basename='ocorrenciarelatorio')
 router.register('revisao-relatorio', viewsets.OcorrenciaRevisaoRelatorioViewSet, basename='ocorrenciarevisaorelatorio')
+router.register('revisao-relatorio-feedback', viewsets.OcorrenciaRevisaoRelatorioFeedbackViewSet, basename='ocorrenciarevisaorelatoriofeedback')
 router.register('investigadas', viewsets.OcorrenciaInvestigadaViewSet, basename='ocorrenciainvestigada')
 
 urlpatterns = router.urls
