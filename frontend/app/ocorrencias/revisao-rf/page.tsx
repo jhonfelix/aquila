@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ArrowDownWideNarrow, Calendar, ChevronDown, Download, FilterX, History, MessageSquareText, Send, X } from 'lucide-react';
+import { ArrowDownWideNarrow, Calendar, ChevronDown, ChevronUp, Download, FilterX, History, MessageSquareText, Send, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import type { OcorrenciaRevisaoRelatorio, OcorrenciaRevisaoRelatorioFeedback, Paginated, RevisaoPainelRow, Usuario } from '@/lib/types';
@@ -542,7 +542,7 @@ export default function RevisaoRfPainelPage() {
 
               <p className="mb-4 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
                 <ArrowDownWideNarrow className="h-3.5 w-3.5" strokeWidth={1.75} />
-                Mais recente primeiro
+                Etapa mais recente no topo — numeração acompanha a ordem em que a revisão avançou
               </p>
 
               {!historico && (
@@ -552,34 +552,53 @@ export default function RevisaoRfPainelPage() {
               )}
 
               {historico && (
-                <ol className="space-y-3">
-                  {historico.map((h) => (
-                    <li key={h.id} className="rounded-lg border border-mist-200 p-3 text-sm dark:border-space-700">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{h.setor || '-'}</span>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <span className="text-xs text-slate-400 dark:text-slate-500">
-                            {h.data_atribuicao ? formatShortDate(h.data_atribuicao) : '-'}
-                          </span>
-                          {h.anexo && (
-                            <a
-                              href={h.anexo}
-                              target="_blank"
-                              rel="noreferrer"
-                              title="Baixar anexo"
-                              className="inline-flex items-center justify-center rounded-full bg-accent-50 p-1.5 text-accent-700 shadow-sm transition-colors hover:bg-accent-100 dark:bg-accent-900/40 dark:text-accent-300 dark:hover:bg-accent-900/60"
-                            >
-                              <Download className="h-3.5 w-3.5" strokeWidth={2} />
-                            </a>
-                          )}
+                <ol>
+                  {historico.map((h, i) => {
+                    const etapa = historico.length - i;
+                    const isLast = i === historico.length - 1;
+                    const setorLabel = REVISAO_SETOR_CHOICES.find(([v]) => v === h.setor)?.[1] || h.setor || 'Etapa';
+                    return (
+                      <li key={h.id} className="relative flex gap-3 pb-6 last:pb-0">
+                        {!isLast && (
+                          <span className="absolute left-[15px] top-8 h-[calc(100%-1.75rem)] w-px bg-mist-200 dark:bg-space-700" />
+                        )}
+                        {!isLast && (
+                          <ChevronUp
+                            className="absolute left-[9px] top-[calc(50%+0.5rem)] h-3 w-3 text-mist-300 dark:text-space-600"
+                            strokeWidth={2}
+                          />
+                        )}
+                        <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-600 text-xs font-semibold text-white shadow-sm">
+                          {etapa}
                         </div>
-                      </div>
-                      <p className="mt-1 text-slate-600 dark:text-slate-400">
-                        Revisor: {h.revisor_display ? formatUsuario(h.revisor_display) : '-'}
-                      </p>
-                      {h.observacao && <p className="mt-1 text-slate-600 dark:text-slate-400">{h.observacao}</p>}
-                    </li>
-                  ))}
+                        <div className="min-w-0 flex-1 rounded-lg border border-mist-200 p-3 text-sm dark:border-space-700">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-slate-800 dark:text-slate-200">{setorLabel}</span>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <span className="text-xs text-slate-400 dark:text-slate-500">
+                                {h.data_atribuicao ? formatShortDate(h.data_atribuicao) : '-'}
+                              </span>
+                              {h.anexo && (
+                                <a
+                                  href={h.anexo}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title="Baixar anexo"
+                                  className="inline-flex items-center justify-center rounded-full bg-accent-50 p-1.5 text-accent-700 shadow-sm transition-colors hover:bg-accent-100 dark:bg-accent-900/40 dark:text-accent-300 dark:hover:bg-accent-900/60"
+                                >
+                                  <Download className="h-3.5 w-3.5" strokeWidth={2} />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                          <p className="mt-1 text-slate-600 dark:text-slate-400">
+                            Revisor: {h.revisor_display ? formatUsuario(h.revisor_display) : '-'}
+                          </p>
+                          {h.observacao && <p className="mt-1 text-slate-600 dark:text-slate-400">{h.observacao}</p>}
+                        </div>
+                      </li>
+                    );
+                  })}
                   {historico.length === 0 && <li className="text-sm text-slate-400 dark:text-slate-500">Sem registros.</li>}
                 </ol>
               )}
