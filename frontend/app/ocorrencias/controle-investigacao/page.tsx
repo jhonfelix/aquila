@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { AlertTriangle, ChevronDown, ClipboardCheck, Download, Pencil, Search, Send, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ClipboardCheck, Download, Pencil, Search, Send, Trash2, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { formatShortDate, formatUsuario } from '@/lib/format';
@@ -132,10 +132,12 @@ function AcaoDropdown({
   ocorrencia,
   onIniciarRevisao,
   onChecklist,
+  onCancelarRevisao,
 }: {
   ocorrencia: OcorrenciaInvestigada;
   onIniciarRevisao: () => void;
   onChecklist: () => void;
+  onCancelarRevisao: () => void;
 }) {
   return (
     <DropdownMenu.Root>
@@ -165,13 +167,23 @@ function AcaoDropdown({
             </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="my-1 border-t border-mist-200 dark:border-space-700" />
-          <DropdownMenu.Item
-            onClick={onIniciarRevisao}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
-          >
-            <Send className="h-4 w-4" strokeWidth={1.75} />
-            Iniciar Processo de Revisão
-          </DropdownMenu.Item>
+          {ocorrencia.revisao_iniciada ? (
+            <DropdownMenu.Item
+              onClick={onCancelarRevisao}
+              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-red-600 outline-none transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-space-800"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+              Cancelar revisão
+            </DropdownMenu.Item>
+          ) : (
+            <DropdownMenu.Item
+              onClick={onIniciarRevisao}
+              className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
+            >
+              <Send className="h-4 w-4" strokeWidth={1.75} />
+              Iniciar Processo de Revisão
+            </DropdownMenu.Item>
+          )}
           <DropdownMenu.Item
             onClick={onChecklist}
             className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
@@ -235,6 +247,19 @@ export default function ControleInvestigacaoPage() {
   function toggleAll() {
     if (!data) return;
     setSelected((prev) => (prev.size === data.results.length ? new Set() : new Set(data.results.map((oc) => oc.id))));
+  }
+
+  async function cancelarRevisao(oc: OcorrenciaInvestigada) {
+    if (!confirm('Cancelar o processo de revisão desta ocorrência? Todas as etapas de revisão serão removidas.')) return;
+    try {
+      await primeCsrf();
+      await apiFetch(`/api/ocorrencia/revisao-relatorio/excluir-processo/?ocorrencia=${oc.id}`, { method: 'DELETE' });
+      toast.success('Revisão cancelada', oc.numero_processo || `#${oc.id}`);
+      setRefreshTick((t) => t + 1);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Erro ao cancelar revisão.';
+      toast.error('Erro ao cancelar revisão', message);
+    }
   }
 
   function exportSelected(filetype: 'json' | 'csv') {
@@ -368,7 +393,12 @@ export default function ControleInvestigacaoPage() {
                       </button>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <AcaoDropdown ocorrencia={oc} onIniciarRevisao={() => setRevisaoFor(oc)} onChecklist={() => setChecklistFor(oc)} />
+                      <AcaoDropdown
+                        ocorrencia={oc}
+                        onIniciarRevisao={() => setRevisaoFor(oc)}
+                        onChecklist={() => setChecklistFor(oc)}
+                        onCancelarRevisao={() => cancelarRevisao(oc)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -396,7 +426,15 @@ export default function ControleInvestigacaoPage() {
         )}
       </PageContainer>
 
-      {revisaoFor && <IniciarRevisaoModal ocorrencia={revisaoFor} onClose={() => setRevisaoFor(null)} />}
+      {revisaoFor && (
+        <IniciarRevisaoModal
+          ocorrencia={revisaoFor}
+          onClose={() => {
+            setRevisaoFor(null);
+            setRefreshTick((t) => t + 1);
+          }}
+        />
+      )}
       {checklistFor && (
         <ChecklistInvestigacaoModal
           ocorrenciaId={checklistFor.id}

@@ -478,6 +478,7 @@ export type OcorrenciaInvestigada = {
   situacao_investigacao: 'ATIVA' | 'FINALIZADA' | null;
   checklist_percentual: number | null;
   checklist_pendencias_atrasadas: number;
+  revisao_iniciada: boolean;
 };
 
 export type ChecklistEtapa = 'COLETA_DADOS' | 'ANALISE' | 'FATOS';

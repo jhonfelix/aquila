@@ -39,6 +39,9 @@ import { formatUsuario } from '@/lib/format';
 import OcorrenciaSearch from './OcorrenciaSearch';
 import ThemeToggle from './ThemeToggle';
 
+// Subtítulo do cabeçalho: truncado a partir de 45 caracteres (texto completo no tooltip).
+const APP_SUBTITLE = 'Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais';
+
 // `perm` é a permissão Django (app_label.acao_model) exigida para o item
 // aparecer no menu — espelha o que o backend (DjangoModelPermissionsWithView)
 // realmente exige pra fazer GET no endpoint por trás da tela. Item sem
@@ -236,7 +239,9 @@ export default function Sidebar() {
             </span>
             <span className="leading-tight">
               <span className="block text-sm font-bold tracking-wide text-slate-900 dark:text-white">ÁQUILA</span>
-              <span className="block text-[11px] text-slate-500 dark:text-slate-400">Sistema de Gestão de Ocorrências Espaciais</span>
+              <span className="block text-[11px] text-slate-500 dark:text-slate-400" title={APP_SUBTITLE}>
+                {APP_SUBTITLE.length > 45 ? `${APP_SUBTITLE.slice(0, 45)}…` : APP_SUBTITLE}
+              </span>
             </span>
           </Link>
         )}

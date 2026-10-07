@@ -295,6 +295,7 @@ class OcorrenciaInvestigadaViewSet(viewsets.ReadOnlyModelViewSet):
             'ocorrencia_controle',
             'ocorrencia_controle__investigador',
             'ocorrencia_checklist_item',
+            'ocorrencia_revisao_relatorio',
         )
         .distinct()
         .order_by('-dia')
@@ -430,6 +431,16 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
     queryset = OcorrenciaRevisaoRelatorio.objects.select_related('revisor', 'cadastrado_por').all()
     serializer_class = ser.OcorrenciaRevisaoRelatorioSerializer
     filterset_fields = ['ocorrencia', 'setor', 'revisor']
+
+    @action(detail=False, methods=['delete'], url_path='excluir-processo')
+    def excluir_processo(self, request):
+        """Exclui o processo de revisão da ocorrência (todas as etapas) — ação
+        "Excluir revisão" do Controle da Investigação."""
+        ocorrencia_id = request.query_params.get('ocorrencia')
+        if not ocorrencia_id:
+            return Response({'detail': "Informe 'ocorrencia'."}, status=status.HTTP_400_BAD_REQUEST)
+        OcorrenciaRevisaoRelatorio.objects.filter(ocorrencia_id=ocorrencia_id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def painel(self, request):

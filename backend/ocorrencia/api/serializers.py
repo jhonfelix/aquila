@@ -178,12 +178,14 @@ class OcorrenciaInvestigadaSerializer(serializers.ModelSerializer):
     situacao_investigacao = serializers.SerializerMethodField()
     checklist_percentual = serializers.SerializerMethodField()
     checklist_pendencias_atrasadas = serializers.SerializerMethodField()
+    revisao_iniciada = serializers.SerializerMethodField()
 
     class Meta:
         model = OcorrenciaGeral
         fields = [
             'id', 'numero_processo', 'classificacao', 'dia', 'horario', 'artefatos', 'investigador',
             'autenticado_em', 'situacao_investigacao', 'checklist_percentual', 'checklist_pendencias_atrasadas',
+            'revisao_iniciada',
         ]
 
     def get_artefatos(self, obj):
@@ -212,6 +214,9 @@ class OcorrenciaInvestigadaSerializer(serializers.ModelSerializer):
     def get_situacao_investigacao(self, obj):
         controle = obj.ocorrencia_controle.first()
         return controle.situacao_investigacao if controle else None
+
+    def get_revisao_iniciada(self, obj):
+        return len(obj.ocorrencia_revisao_relatorio.all()) > 0
 
     def get_checklist_percentual(self, obj):
         itens = list(obj.ocorrencia_checklist_item.all())
