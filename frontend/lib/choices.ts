@@ -8,15 +8,90 @@ export const CLASSIFICACAO_CHOICES = [
   ['INFORTÚNIO', 'INFORTÚNIO'],
 ];
 
-export const TIPO_OCORRENCIA_CHOICES = [
-  ['explosao', 'Explosão'],
-  ['falha_estagio', 'Falha de Estágio'],
-  ['perda_telemetria', 'Perda de Telemetria'],
-  ['falha_motor', 'Falha de Motor'],
-  ['reentrada_nao_controlada', 'Reentrada Não Controlada'],
-  ['colisao_orbital', 'Colisão Orbital'],
-  ['outro', 'Outro'],
+// Tipo da ocorrência varia conforme o artefato espacial: foguete (Anexo M) ou
+// satélite (Anexo N). Cada grupo (PROP, ENV...) é um cabeçalho e os subtipos
+// ficam abaixo; o valor salvo é o subtipo (ex.: PROP.1).
+// Manter em sincronia com OcorrenciaGeral.TIPO_CHOICES (backend).
+export type ChoiceGroup = { label: string; choices: string[][] };
+
+export const TIPO_OCORRENCIA_FOGUETE_GROUPS: ChoiceGroup[] = [
+  {
+    label: 'PROP — Sistema de Propulsão',
+    choices: [
+      ['PROP.1', 'PROP.1 — Motores e Câmaras de Combustão'],
+      ['PROP.2', 'PROP.2 — Sistema de Alimentação e Injeção de Propelente'],
+      ['PROP.3', 'PROP.3 — Controle de Fluxo e Pressurização'],
+    ],
+  },
+  {
+    label: 'TACS — Controle de Atitude, Aviônica e Guiagem',
+    choices: [
+      ['TACS.1', 'TACS.1 — Unidades de Guiagem e Navegação (GNC / Computador de Voo)'],
+      ['TACS.2', 'TACS.2 — Sensores e Instrumentação'],
+      ['TACS.3', 'TACS.3 — Sistema Elétrico e Transmissão de Sinal'],
+      ['TACS.4', 'TACS.4 — Atuadores de Vetorização de Empuxo (TVC)'],
+    ],
+  },
+  {
+    label: 'SEP-STR — Sistemas de Separação e Estrutura',
+    choices: [
+      ['SEP-STR.1', 'SEP-STR.1 — Mecanismos de Separação de Estágios'],
+      ['SEP-STR.2', 'SEP-STR.2 — Sistema de Coifa de Proteção (Payload Fairing)'],
+      ['SEP-STR.3', 'SEP-STR.3 — Integridade Estrutural e Materiais'],
+    ],
+  },
 ];
+
+export const TIPO_OCORRENCIA_SATELITE_GROUPS: ChoiceGroup[] = [
+  {
+    label: 'ENV — Origem Ambiental',
+    choices: [
+      ['ENV.1', 'ENV.1 — Radiação Ionizante e Efeitos de Evento Único (SEE)'],
+      ['ENV.2', 'ENV.2 — Carregamento Eletrostático e Descargas (ESD)'],
+      ['ENV.3', 'ENV.3 — Micrometeoroides e Detritos Orbitais (MMOD)'],
+      ['ENV.4', 'ENV.4 — Perturbações Geomagnéticas e Clima Espacial'],
+    ],
+  },
+  {
+    label: 'HW — Origem em Hardware Embarcado',
+    choices: [
+      ['HW.1', 'HW.1 — Componentes Eletrônicos e Potência Elétrica (EPS)'],
+      ['HW.2', 'HW.2 — Mecanismos, Estrutura e Controle Térmico'],
+      ['HW.3', 'HW.3 — Subsistema Propulsivo Embarcado'],
+    ],
+  },
+  {
+    label: 'FSW — Origem em Software Embarcado',
+    choices: [
+      ['FSW.1', 'FSW.1 — Erros Lógicos de Voo e RTOS'],
+      ['FSW.2', 'FSW.2 — Mecanismos de Tolerância a Falhas e Memória'],
+    ],
+  },
+  {
+    label: 'OPS — Origem em Operações Terrestres e Segmento Solo',
+    choices: [
+      ['OPS.1', 'OPS.1 — Infraestrutura de Solo e Enlaces'],
+      ['OPS.2', 'OPS.2 — Fatores Humanos e Procedimentos Operacionais'],
+    ],
+  },
+  {
+    label: 'INT — Origem Intencional e Interferência Adversária',
+    choices: [
+      ['INT.1', 'INT.1 — Interferência em Radiofrequência e Guerra Eletrônica'],
+      ['INT.2', 'INT.2 — Ataques Ciber e Ações Antissatélite (ASAT)'],
+    ],
+  },
+];
+
+export const TIPO_OCORRENCIA_GROUPS: ChoiceGroup[] = [...TIPO_OCORRENCIA_FOGUETE_GROUPS, ...TIPO_OCORRENCIA_SATELITE_GROUPS];
+
+// `artefatoTipo`: valor de AERONAVE_TIPO_CHOICES ('Estágio de foguete' | 'Satélite' | ...).
+// Sem artefato definido (ou sonda/cápsula) mostra todos os grupos.
+export function tipoOcorrenciaGroups(artefatoTipo?: string | null): ChoiceGroup[] {
+  if (artefatoTipo === 'Estágio de foguete') return TIPO_OCORRENCIA_FOGUETE_GROUPS;
+  if (artefatoTipo === 'Satélite') return TIPO_OCORRENCIA_SATELITE_GROUPS;
+  return TIPO_OCORRENCIA_GROUPS;
+}
 
 export const DANOS_TERCEIROS_CHOICES = [
   ['SIM', 'SIM'],
@@ -33,6 +108,12 @@ export const CHECKLIST_ETAPA_CHOICES: [string, string][] = [
   ['COLETA_DADOS', 'Coleta de Dados'],
   ['ANALISE', 'Análise'],
   ['FATOS', 'Fatos'],
+];
+
+export const ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES = [
+  ['CLA', 'CLA'],
+  ['CLBI', 'CLBI'],
+  ['COPE', 'COPE'],
 ];
 
 export const ORBITA_TIPO_CHOICES = [

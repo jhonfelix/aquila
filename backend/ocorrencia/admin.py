@@ -505,7 +505,7 @@ class OcorrenciaBaseAdminMixin:
     advanced_filter_fields = ('classificacao')
     search_fields = ['id', 'classificacao']
     readonly_fields = ('cadastrado_em', 'cadastrado_por_id', 'status', 'numero_processo')
-    autocomplete_fields = ['cidade', 'aerodromo']
+    autocomplete_fields = ['cidade']
     actions = [make_published, export_as_json, export_as_csv]
     date_hierarchy = 'dia'
 
@@ -726,7 +726,7 @@ class OcorrenciaRedigirAdmin(ModelAdmin):
     )
 
     inlines = [RedigirAeronaveInline]
-    autocomplete_fields = ['cidade', 'aerodromo']
+    autocomplete_fields = ['cidade']
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -839,7 +839,7 @@ class OcorrenciaConfirmarAdmin(ModelAdmin):
     )
 
     inlines = [ConfirmarAeronaveInline, ConfirmarControleInline]
-    autocomplete_fields = ['cidade', 'aerodromo']
+    autocomplete_fields = ['cidade']
     readonly_fields = ('cadastrado_em', 'cadastrado_por_id')
 
     def get_queryset(self, request):
@@ -972,7 +972,7 @@ class OcorrenciaAutenticarAdmin(ModelAdmin):
     )
 
     inlines = [AutenticarAeronaveInline, AutenticarControleInline]
-    autocomplete_fields = ['cidade', 'aerodromo']
+    autocomplete_fields = ['cidade']
     readonly_fields = ('cadastrado_em', 'cadastrado_por_id')
 
     def get_queryset(self, request):

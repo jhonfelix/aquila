@@ -1,5 +1,5 @@
 from django.db import models
-from taxonomia.models import GeografiaCidade, AerodromoGeral, VeiculoLancador
+from taxonomia.models import GeografiaCidade, VeiculoLancador
 from usuario.models import User
 
 class OcorrenciaGeral(models.Model):
@@ -11,14 +11,48 @@ class OcorrenciaGeral(models.Model):
         ('INCIDENTE', 'INCIDENTE'),
         ('INFORTÚNIO', 'INFORTÚNIO')
     ]
+    # Tipos de ocorrência agrupados: foguete (Anexo M) e satélite (Anexo N).
+    # O valor é o subtipo (ex.: PROP.1); o grupo (PROP, ENV...) é só o cabeçalho.
     TIPO_CHOICES = [
-       ("explosao", "Explosão"),
-        ("falha_estagio", "Falha de Estágio"),
-        ("perda_telemetria", "Perda de Telemetria"),
-        ("falha_motor", "Falha de Motor"),
-        ("reentrada_nao_controlada", "Reentrada Não Controlada"),
-        ("colisao_orbital", "Colisão Orbital"),
-        ("outro", "Outro"),
+        ("PROP — Sistema de Propulsão", [
+            ("PROP.1", "PROP.1 — Motores e Câmaras de Combustão"),
+            ("PROP.2", "PROP.2 — Sistema de Alimentação e Injeção de Propelente"),
+            ("PROP.3", "PROP.3 — Controle de Fluxo e Pressurização"),
+        ]),
+        ("TACS — Controle de Atitude, Aviônica e Guiagem", [
+            ("TACS.1", "TACS.1 — Unidades de Guiagem e Navegação (GNC / Computador de Voo)"),
+            ("TACS.2", "TACS.2 — Sensores e Instrumentação"),
+            ("TACS.3", "TACS.3 — Sistema Elétrico e Transmissão de Sinal"),
+            ("TACS.4", "TACS.4 — Atuadores de Vetorização de Empuxo (TVC)"),
+        ]),
+        ("SEP-STR — Sistemas de Separação e Estrutura", [
+            ("SEP-STR.1", "SEP-STR.1 — Mecanismos de Separação de Estágios"),
+            ("SEP-STR.2", "SEP-STR.2 — Sistema de Coifa de Proteção (Payload Fairing)"),
+            ("SEP-STR.3", "SEP-STR.3 — Integridade Estrutural e Materiais"),
+        ]),
+        ("ENV — Origem Ambiental", [
+            ("ENV.1", "ENV.1 — Radiação Ionizante e Efeitos de Evento Único (SEE)"),
+            ("ENV.2", "ENV.2 — Carregamento Eletrostático e Descargas (ESD)"),
+            ("ENV.3", "ENV.3 — Micrometeoroides e Detritos Orbitais (MMOD)"),
+            ("ENV.4", "ENV.4 — Perturbações Geomagnéticas e Clima Espacial"),
+        ]),
+        ("HW — Origem em Hardware Embarcado", [
+            ("HW.1", "HW.1 — Componentes Eletrônicos e Potência Elétrica (EPS)"),
+            ("HW.2", "HW.2 — Mecanismos, Estrutura e Controle Térmico"),
+            ("HW.3", "HW.3 — Subsistema Propulsivo Embarcado"),
+        ]),
+        ("FSW — Origem em Software Embarcado", [
+            ("FSW.1", "FSW.1 — Erros Lógicos de Voo e RTOS"),
+            ("FSW.2", "FSW.2 — Mecanismos de Tolerância a Falhas e Memória"),
+        ]),
+        ("OPS — Origem em Operações Terrestres e Segmento Solo", [
+            ("OPS.1", "OPS.1 — Infraestrutura de Solo e Enlaces"),
+            ("OPS.2", "OPS.2 — Fatores Humanos e Procedimentos Operacionais"),
+        ]),
+        ("INT — Origem Intencional e Interferência Adversária", [
+            ("INT.1", "INT.1 — Interferência em Radiofrequência e Guerra Eletrônica"),
+            ("INT.2", "INT.2 — Ataques Ciber e Ações Antissatélite (ASAT)"),
+        ]),
     ]
     classificacao = models.CharField(null=True, max_length=50,choices=CLASSIFICACAO_CHOICES, verbose_name='Classificação')
     tipo = models.CharField(null=True, max_length=50,choices=TIPO_CHOICES, verbose_name='tipo')
@@ -29,7 +63,12 @@ class OcorrenciaGeral(models.Model):
     horario_utc = models.TimeField(null=True, verbose_name='Hora UTC')
     cidade = models.ForeignKey(GeografiaCidade, on_delete=models.PROTECT)
     local = models.CharField(null=True, max_length=100, blank=True)
-    aerodromo = models.ForeignKey(AerodromoGeral, on_delete=models.PROTECT, verbose_name='Organização do segmento espacial')
+    ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES = [
+        ('CLA', 'CLA'),
+        ('CLBI', 'CLBI'),
+        ('COPE', 'COPE'),
+    ]
+    aerodromo = models.CharField(max_length=10, choices=ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES, verbose_name='Organização do segmento espacial')
     latitude = models.CharField(null=True, max_length=100, blank=True)
     longitude = models.CharField(null=True, max_length=100, blank=True)
     latitude_decimal = models.CharField(null=True, max_length=100, blank=True)
@@ -316,52 +355,120 @@ class OcorrenciaChecklistItem(models.Model):
 # alerta de pendência na tela Controle da Investigação.
 CHECKLIST_ETAPA1_PRAZO_DIAS = 30
 
-# Checklist padrão sugerido a cada nova ocorrência (POST .../checklist-item/seed/),
-# adaptado do modelo "Ficha de Coleta de Dados" (documentos de tripulação/aeronave/
-# manutenção/empresa) para as 3 etapas do processo de investigação. Cada ocorrência
+# Checklist padrão semeado na ocorrência (POST .../checklist-item/seed/), conforme o
+# tipo do artefato espacial (OcorrenciaAeronave.tipo): Anexo K (foguete — ações
+# imediatas em ocorrência no lançamento) ou Anexo L (satélite). Os itens são os
+# dos anexos, resumidos; as etapas seguem a natureza de cada item. Cada ocorrência
 # pode editar/remover/adicionar itens livremente depois de semeado — não há
-# sincronização de volta com esta lista.
-CHECKLIST_ITENS_PADRAO = [
-    # Etapa 1 — Coleta de Dados (documentos da tripulação + da aeronave)
-    ('COLETA_DADOS', 'Preencher Ficha de Coleta de Dados'),
-    ('COLETA_DADOS', 'Relato por escrito do ocorrido feito pelo(s) tripulante(s), quando viável'),
-    ('COLETA_DADOS', 'Certificados de cursos/treinamentos'),
-    ('COLETA_DADOS', 'Caderneta individual de voo'),
-    ('COLETA_DADOS', 'Apólice ou certificado de seguro RETA (Subparte C, 91.203, (A)(5))'),
-    ('COLETA_DADOS', 'Autorização para operações específicas (Subparte C, 91.203, (A)(9))'),
-    ('COLETA_DADOS', 'Certificado de aeronavegabilidade (Subparte C, 91.203, (A)(1))'),
-    ('COLETA_DADOS', 'Certificado de matrícula (Subparte C, 91.203, (A)(1))'),
-    ('COLETA_DADOS', 'Certificado de verificação de aeronavegabilidade (Subparte C, 91.203, (A)(7))'),
-    ('COLETA_DADOS', 'Checklist normal (Subparte C, 91.203, (A)(2))'),
-    ('COLETA_DADOS', 'Checklist de emergência (Subparte C, 91.203, (A)(2))'),
-    ('COLETA_DADOS', 'Diário de bordo (últimos 90 dias) (Subparte C, 91.203, (A)(4))'),
-    ('COLETA_DADOS', 'Ficha de peso e balanceamento (Subparte C, 91.203, (A)(12))'),
-    ('COLETA_DADOS', 'Licença de estação (Subparte C, 91.203, (A)(6))'),
-    ('COLETA_DADOS', 'Manual de voo aprovado (POH, AFM) ou manual de operação da aeronave (AOM) (Subparte A, 91.9)'),
-    ('COLETA_DADOS', 'Publicações aeronáuticas a bordo (Subparte C, 91.203, (A)(13))'),
-    # Etapa 2 — Análise (documentos relacionados à manutenção)
-    ('ANALISE', 'Caderneta de célula, todas as páginas (IS 43.9-003B)'),
-    ('ANALISE', 'Caderneta de hélice, todas as páginas (IS 43.9-003B)'),
-    ('ANALISE', 'Caderneta de motor, todas as páginas (IS 43.9-003B)'),
-    ('ANALISE', 'Ficha de cumprimento de diretrizes de aeronavegabilidade de célula, hélice e motor (IS 39-001C, 5.13)'),
-    ('ANALISE', 'Lista de equipamentos mínimos (MEL) (Subparte C, 91.213)'),
-    ('ANALISE', 'Manual de manutenção da aeronave (manual de serviço) (Subparte E, 91.403, (C))'),
-    ('ANALISE', 'Mapa de controle de diretrizes de aeronavegabilidade de célula, hélice e motor (IS 39-001C, 5.14)'),
-    ('ANALISE', 'Mapa informativo de controle de componentes de célula, hélice e motor (Subparte E, 91.417, (A)(2))'),
-    ('ANALISE', 'Nota fiscal de abastecimento de combustível (NSCA 3-13, 4.4)'),
-    ('ANALISE', 'Ordem de serviço da última CVA (IS 43.9-003B, 4.6)'),
-    ('ANALISE', 'Ordem de serviço da última inspeção de célula, hélice e motor (IS 43.9-003B, 4.6)'),
-    ('ANALISE', 'SEGVOO 001 das grandes modificações ou reparos de célula, hélice e motor (IS 43.9-001A)'),
-    ('ANALISE', 'SEGVOO 003 dos componentes instalados na célula, hélice e motor (IS 43.9-002B)'),
-    # Etapa 3 — Fatos (documentos relacionados à empresa, quando for o caso)
-    ('FATOS', 'Certificado de operador aéreo'),
-    ('FATOS', 'Especificação operativa'),
-    ('FATOS', 'Manual de gerenciamento da segurança operacional'),
-    ('FATOS', 'Manual geral da empresa'),
-    ('FATOS', 'Programa(s) de treinamento em vigor'),
-    ('FATOS', 'Ficha(s) de avaliação e registros de treinamento do(s) piloto(s)'),
-    ('FATOS', 'Registro individual do piloto (Subparte B, 135.63 (A)(4))'),
+# sincronização de volta com estas listas.
+CHECKLIST_ITENS_PADRAO_FOGUETE = [
+    ('COLETA_DADOS', 'Ativar planos de contingência no MCC e na plataforma de lançamento'),
+    ('COLETA_DADOS', 'Confirmar estado do FTS (acionamento automático, manual ou desarme seguro)'),
+    ('COLETA_DADOS', 'Manter zonas de exclusão com autoridades aeronáuticas e marítimas (TFR/NOTMAR)'),
+    ('COLETA_DADOS', 'Isolar áreas com propelentes remanescentes, criogênicos, hipergólicos ou riscos químicos'),
+    ('COLETA_DADOS', 'Preservar registros brutos de telemetria'),
+    ('COLETA_DADOS', 'Extrair dados brutos de trajetória de todos os radares'),
+    ('COLETA_DADOS', 'Preservar registros cinemáticos'),
+    ('COLETA_DADOS', 'Preservar dados do console do FSO'),
+    ('COLETA_DADOS', 'Preservar registros do transmissor terrestre do FTS'),
+    ('COLETA_DADOS', 'Preservar telemetria do receptor embarcado do FTS'),
+    ('COLETA_DADOS', 'Registrar acionamento automático do FTS por violação de limites'),
+    ('COLETA_DADOS', 'Fazer backup dos registros do MCC'),
+    ('COLETA_DADOS', 'Registrar perdas de enlace (LOV)'),
+    ('COLETA_DADOS', 'Verificar sincronização temporal UTC'),
+    ('COLETA_DADOS', 'Preservar gravações de comunicações'),
+    ('COLETA_DADOS', 'Gerar cópias forenses das imagens (hash SHA-256)'),
+    ('COLETA_DADOS', 'Restringir acesso às instalações'),
+    ('COLETA_DADOS', 'Preservar configuração física dos consoles'),
+    ('COLETA_DADOS', 'Fazer documentação fotográfica sistemática'),
+    ('COLETA_DADOS', 'Executar levantamento aerofotogramétrico por RPAS/UAV'),
+    ('COLETA_DADOS', 'Estabelecer cadeia de custódia dos componentes recuperados'),
+    ('COLETA_DADOS', 'Preservar Flight Rules, SOPs, LCC e demais documentos operacionais'),
+    ('COLETA_DADOS', 'Preservar Ordem de Operações'),
+    ('COLETA_DADOS', 'Arquivar waivers, desvios e aceitações formais de risco'),
+    ('COLETA_DADOS', 'Preservar Relprev, Safety Action Reports e relatos de condições inseguras'),
+    ('COLETA_DADOS', 'Preservar Integration Logs, NCRs e ARs'),
+    ('COLETA_DADOS', 'Confirmar configuração física certificada do veículo'),
+    ('COLETA_DADOS', 'Isolar registros de aceitações "use as-is"'),
+    ('COLETA_DADOS', 'Preservar dados meteorológicos locais'),
+    ('COLETA_DADOS', 'Preservar perfil vertical de ventos'),
+    ('COLETA_DADOS', 'Preservar registros de descargas atmosféricas'),
+    ('COLETA_DADOS', 'Preservar dados de clima espacial, quando aplicável'),
+    ('COLETA_DADOS', 'Preservar escalas, certificações e períodos de repouso'),
+    ('COLETA_DADOS', 'Realizar entrevistas estruturadas individuais'),
+    ('COLETA_DADOS', 'Preservar comunicações do MCC para análise posterior'),
+    ('COLETA_DADOS', 'Confirmar preservação de todas as evidências prioritárias'),
+    ('COLETA_DADOS', 'Registrar evidências não preservadas e justificar'),
+    ('COLETA_DADOS', 'Confirmar integridade da cadeia de custódia'),
+    ('COLETA_DADOS', 'Autorizar transição para a análise aprofundada'),
+    ('ANALISE', 'Constituir grupos técnicos multidisciplinares'),
+    ('ANALISE', 'Formalizar a corroboração cruzada das evidências'),
+    ('FATOS', 'Iniciar reconstrução do Diagrama de Sequência de Eventos (DSE)'),
 ]
+
+CHECKLIST_ITENS_PADRAO_SATELITE = [
+    ('COLETA_DADOS', 'Registrar horário da notificação (UTC) e fonte primária'),
+    ('COLETA_DADOS', 'Confirmar identificadores: nome, COSPAR ID, NORAD, operador e Estado de registro'),
+    ('COLETA_DADOS', 'Congelar e copiar stream bruto de HK, com margem antes e depois do evento'),
+    ('COLETA_DADOS', 'Preservar HK na frequência original (1–16 Hz), sem versões decimadas'),
+    ('COLETA_DADOS', 'Registrar saltos de timestamp, desalinhamento OBT/UTC e lacunas de cobertura'),
+    ('COLETA_DADOS', 'Documentar parâmetros fora de limite na notificação'),
+    ('COLETA_DADOS', 'Solicitar dados orbitais recentes e TLEs pré e pós-evento'),
+    ('COLETA_DADOS', 'Verificar no catálogo novos objetos na vizinhança (fragmentação)'),
+    ('COLETA_DADOS', 'Se houver suspeita de fragmentação, iniciar alerta de conjunção a terceiros e à ISS'),
+    ('COLETA_DADOS', 'Registrar Kp e Dst no evento e nas 72 h anteriores'),
+    ('COLETA_DADOS', 'Verificar passagem pela Anomalia do Atlântico Sul (SAA)'),
+    ('COLETA_DADOS', 'Verificar alerta de clima espacial (NOAA/SWPC, ESA) nas 72 h e se foi recebido'),
+    ('COLETA_DADOS', 'Preservar dados de dosímetros, detectores de partículas e acelerômetros de bordo'),
+    ('COLETA_DADOS', 'Congelar repositório do FSW na condição do evento'),
+    ('COLETA_DADOS', 'Preservar memory dumps transmitidos'),
+    ('COLETA_DADOS', 'Preservar sequência completa de telecomandos'),
+    ('COLETA_DADOS', 'Verificar modificações recentes de software e parâmetros (patch history)'),
+    ('COLETA_DADOS', 'Preservar registros de atuação do FDIR'),
+    ('COLETA_DADOS', 'Emitir ordem formal de preservação (data freeze) a todos os detentores de dados'),
+    ('COLETA_DADOS', 'Gerar hash SHA-256 dos dados e lavrar termo de custódia'),
+    ('COLETA_DADOS', 'Se LOM: determinar o momento de LOS correlacionando múltiplas estações'),
+    ('COLETA_DADOS', 'Se LOM: tentar detectar sinal residual em redes complementares (UIT, KSAT, SSC, AMSAT)'),
+    ('COLETA_DADOS', 'Se LOM: preparar análise retrospectiva da telemetria em busca de precursores'),
+    ('COLETA_DADOS', 'Se AOCS: preservar dados dos sensores de atitude redundantes (cross-voting)'),
+    ('COLETA_DADOS', 'Se AOCS: registrar resposta dos atuadores aos últimos comandos'),
+    ('COLETA_DADOS', 'Se AOCS: correlacionar com dados ambientais (arrasto, pressão de radiação solar)'),
+    ('COLETA_DADOS', 'Se payload: verificar se a plataforma (bus) permanece nominal'),
+    ('COLETA_DADOS', 'Se payload: registrar modo de operação científica no momento do evento'),
+    ('COLETA_DADOS', 'Preservar shift logs, e-mails e atas de decisão do período anterior'),
+    ('COLETA_DADOS', 'Registrar escala de plantão das 24 h anteriores'),
+    ('COLETA_DADOS', 'Registrar se e quando o alerta de clima espacial foi recebido e a decisão tomada'),
+    ('COLETA_DADOS', 'Anotar alterações recentes de procedimento ou script de solo'),
+    ('COLETA_DADOS', 'Verificar interferência de RF anômala no uplink ou GNSS'),
+    ('COLETA_DADOS', 'Verificar comando não autorizado ou falha de autenticação no enlace'),
+    ('COLETA_DADOS', 'Havendo indício, acionar canal de segurança/inteligência'),
+    ('COLETA_DADOS', 'Acionar rastreamento e catalogação de fragmentos'),
+    ('COLETA_DADOS', 'Caracterizar mecanismo provável (explosão de propelente ou colisão)'),
+    ('COLETA_DADOS', 'Emitir alertas de conjunção sem aguardar a caracterização completa'),
+    ('COLETA_DADOS', 'Consolidar classificação provisória e evidências preservadas, com horário de aquisição'),
+    ('COLETA_DADOS', 'Registrar evidências não preservadas e a razão'),
+    ('COLETA_DADOS', 'Confirmar que nenhuma hipótese de domínio foi descartada prematuramente'),
+    ('COLETA_DADOS', 'Autorizar transição para a análise aprofundada'),
+    ('ANALISE', 'Classificar preliminarmente o domínio de origem, sem excluir hipóteses'),
+    ('ANALISE', 'Domínio: ambiental (radiação, ESD, MMOD, geomagnético, arrasto)'),
+    ('ANALISE', 'Domínio: hardware (eletrônica, estrutura, propulsão, térmico, EPS)'),
+    ('ANALISE', 'Domínio: software embarcado (FSW, FDIR, RTOS, memória)'),
+    ('ANALISE', 'Domínio: operações terrestres/segmento solo'),
+    ('ANALISE', 'Domínio: intencional/adversária (jamming, spoofing, ciber, ASAT)'),
+    ('ANALISE', 'Domínio: indeterminada (sem forçar enquadramento)'),
+    ('ANALISE', 'Classificar severidade preliminar (S-1 a S-4), como provisória'),
+    ('ANALISE', 'Classificar perfil temporal (súbita, gradual ou latente)'),
+    ('ANALISE', 'Lembrar: taxonomia de domínio organiza a fase inicial, não define causa definitiva'),
+]
+
+
+def checklist_itens_padrao(tipo_artefato):
+    """Itens padrão para o tipo de artefato; vazio se não houver anexo correspondente."""
+    if tipo_artefato == 'Estágio de foguete':
+        return CHECKLIST_ITENS_PADRAO_FOGUETE
+    if tipo_artefato == 'Satélite':
+        return CHECKLIST_ITENS_PADRAO_SATELITE
+    return []
 
 
 class OcorrenciaRelatorio(models.Model):

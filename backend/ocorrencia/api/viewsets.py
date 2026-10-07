@@ -19,7 +19,7 @@ from ocorrencia.models import (
     OcorrenciaAsoaci,
     OcorrenciaAutenticacao,
     OcorrenciaChecklistItem,
-    CHECKLIST_ITENS_PADRAO,
+    checklist_itens_padrao,
     OcorrenciaComissao,
     OcorrenciaConfirmacao,
     OcorrenciaControle,
@@ -177,7 +177,7 @@ class OcorrenciaGeralViewSet(viewsets.ModelViewSet):
     admin nesses campos.
     """
 
-    queryset = OcorrenciaGeral.objects.select_related('cidade', 'aerodromo', 'cadastrado_por_id').prefetch_related(
+    queryset = OcorrenciaGeral.objects.select_related('cidade', 'cadastrado_por_id').prefetch_related(
         'ocorrencia_aeronave', 'ocorrencia_aeronave__artefato_espacial', 'ocorrencia_aeronave__artefato_espacial__artefato',
     ).distinct()
     serializer_class = ser.OcorrenciaGeralSerializer
@@ -305,7 +305,7 @@ class OcorrenciaInvestigadaViewSet(viewsets.ReadOnlyModelViewSet):
 
 class OcorrenciaChecklistItemViewSet(_OcorrenciaChildViewSet):
     """Checklist do processo de investigação (tela Controle da Investigação).
-    Semeado por ocorrência via `seed/` a partir de CHECKLIST_ITENS_PADRAO — depois
+    Semeado por ocorrência via `seed/` a partir do checklist do tipo de artefato (Anexo K foguete / L satélite) — depois
     disso os itens vivem só naquela ocorrência (livre pra editar/adicionar/remover,
     sem voltar a sincronizar com o padrão)."""
 
@@ -327,9 +327,10 @@ class OcorrenciaChecklistItemViewSet(_OcorrenciaChildViewSet):
             return Response({'detail': "Informe 'ocorrencia'."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not OcorrenciaChecklistItem.objects.filter(ocorrencia_id=ocorrencia_id).exists():
+            tipo_artefato = OcorrenciaAeronave.objects.filter(ocorrencia_id=ocorrencia_id).values_list('tipo', flat=True).first()
             OcorrenciaChecklistItem.objects.bulk_create([
                 OcorrenciaChecklistItem(ocorrencia_id=ocorrencia_id, etapa=etapa, descricao=descricao, ordem=ordem, padrao=True)
-                for ordem, (etapa, descricao) in enumerate(CHECKLIST_ITENS_PADRAO)
+                for ordem, (etapa, descricao) in enumerate(checklist_itens_padrao(tipo_artefato))
             ])
 
         itens = OcorrenciaChecklistItem.objects.select_related('responsavel').filter(ocorrencia_id=ocorrencia_id)

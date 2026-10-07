@@ -62,13 +62,16 @@ export function Select({
   value,
   onChange,
   choices,
+  groups,
   required,
   emptyLabel = '—',
   className,
 }: {
   value: string;
   onChange: (v: string) => void;
-  choices: string[][];
+  choices?: string[][];
+  // Opções agrupadas (<optgroup>): o cabeçalho do grupo não é selecionável.
+  groups?: { label: string; choices: string[][] }[];
   required?: boolean;
   emptyLabel?: string;
   className?: string;
@@ -76,11 +79,21 @@ export function Select({
   return (
     <select className={cn(inputClass, className)} value={value} onChange={(e) => onChange(e.target.value)} required={required}>
       <option value="">{emptyLabel}</option>
-      {choices.map(([v, label]) => (
-        <option key={v} value={v}>
-          {label}
-        </option>
-      ))}
+      {groups
+        ? groups.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.choices.map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
+            </optgroup>
+          ))
+        : choices?.map(([v, label]) => (
+            <option key={v} value={v}>
+              {label}
+            </option>
+          ))}
     </select>
   );
 }

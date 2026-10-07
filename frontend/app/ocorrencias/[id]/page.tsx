@@ -23,7 +23,6 @@ import type {
   OcorrenciaRecomendacao,
   OcorrenciaRevisaoRelatorio,
   GeografiaCidade,
-  AerodromoGeral,
   VeiculoLancador,
   Usuario,
   Paginated,
@@ -49,9 +48,10 @@ import {
 import { cn } from '@/lib/cn';
 import {
   CLASSIFICACAO_CHOICES,
-  TIPO_OCORRENCIA_CHOICES,
+  tipoOcorrenciaGroups,
   DANOS_TERCEIROS_CHOICES,
   LOCALIZACAO_TIPO_CHOICES,
+  ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES,
   ORBITA_TIPO_CHOICES,
   AERONAVE_TIPO_CHOICES,
   DANOS_ARTEFATO_CHOICES,
@@ -194,8 +194,16 @@ function GeralTab({
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [cadastradoPor, setCadastradoPor] = useState<Usuario | null>(null);
+  // Tipo do artefato (aba Artefato Espacial) define as opções do Tipo da ocorrência.
+  const [artefatoTipo, setArtefatoTipo] = useState<string | null>(null);
 
   useEffect(() => setForm(oc), [oc]);
+
+  useEffect(() => {
+    apiFetch<Paginated<OcorrenciaAeronave>>(`/api/ocorrencia/aeronaves/?ocorrencia=${oc.id}`)
+      .then((d) => setArtefatoTipo(d.results[0]?.tipo ?? null))
+      .catch(() => setArtefatoTipo(null));
+  }, [oc.id]);
 
   useEffect(() => {
     if (!oc.cadastrado_por_id) return;
@@ -265,7 +273,7 @@ function GeralTab({
             <Select
               value={form.tipo || ''}
               onChange={(v) => set('tipo', v)}
-              choices={TIPO_OCORRENCIA_CHOICES}
+              groups={tipoOcorrenciaGroups(artefatoTipo)}
               required
               className={fieldErrors.tipo ? errorRingClass : undefined}
             />
@@ -327,13 +335,11 @@ function GeralTab({
             />
           </Field>
           <Field label="Organização do segmento espacial" error={fieldErrors.aerodromo}>
-            <AsyncCombobox
-              apiPath="/api/taxonomia/aerodromos/"
-              value={form.aerodromo}
-              onChange={(v) => set('aerodromo', v as number)}
-              getLabel={(a: AerodromoGeral) => a.nome}
+            <Select
+              value={form.aerodromo || ''}
+              onChange={(v) => set('aerodromo', v)}
+              choices={ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES}
               required
-              invalid={!!fieldErrors.aerodromo}
             />
           </Field>
         </div>

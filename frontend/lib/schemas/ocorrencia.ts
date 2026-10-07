@@ -16,7 +16,7 @@ export const redigirOcorrenciaSchema = z.object({
   tipo: requiredChoice('Selecione o tipo'),
   dia: z.string().trim().min(1, 'Informe a data da ocorrência'),
   cidade: requiredId('Selecione a cidade'),
-  aerodromo: requiredId('Selecione a organização do segmento espacial'),
+  aerodromo: requiredChoice('Selecione a organização do segmento espacial'),
 });
 
 const requiredValue = (message: string) => z.string().trim().min(1, message);
@@ -31,7 +31,7 @@ export const geralTabSchema = z.object({
   dia_utc: requiredValue('Informe o dia UTC'),
   horario_utc: requiredValue('Informe a hora UTC'),
   cidade: requiredId('Selecione a cidade'),
-  aerodromo: requiredId('Selecione a organização do segmento espacial'),
+  aerodromo: requiredChoice('Selecione a organização do segmento espacial'),
   danos_terceiros: requiredChoice('Selecione os danos a terceiros'),
   historico: requiredValue('Informe o histórico'),
 });

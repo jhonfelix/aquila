@@ -149,13 +149,6 @@ function AcaoDropdown({ ocorrenciaId }: { ocorrenciaId: number }) {
             <Upload className="h-4 w-4" strokeWidth={1.75} />
             Upload Minuta
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            onClick={fakeAction}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
-          >
-            <Upload className="h-4 w-4" strokeWidth={1.75} />
-            Upload de Documento Geral
-          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

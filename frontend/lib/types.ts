@@ -23,7 +23,7 @@ export type OcorrenciaGeral = {
   cidade: number;
   cidade_nome: string | null;
   local: string | null;
-  aerodromo: number;
+  aerodromo: string;
   latitude: string | null;
   longitude: string | null;
   latitude_decimal: string | null;

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { AlertTriangle, ChevronDown, ClipboardCheck, Download, FileEdit, Pencil, Search, Send, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ClipboardCheck, Download, Pencil, Search, Send, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { formatShortDate, formatUsuario } from '@/lib/format';
@@ -137,10 +137,6 @@ function AcaoDropdown({
   onIniciarRevisao: () => void;
   onChecklist: () => void;
 }) {
-  function fakeAction() {
-    toast.info('Funcionalidade ainda não implementada');
-  }
-
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -182,14 +178,6 @@ function AcaoDropdown({
           >
             <ClipboardCheck className="h-4 w-4" strokeWidth={1.75} />
             Checklist da Investigação
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            onClick={fakeAction}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 dark:text-slate-200 dark:hover:bg-space-800"
-          >
-            <FileEdit className="h-4 w-4" strokeWidth={1.75} />
-            Atualizar progresso da Investigação
-            <span className="text-xs text-slate-400 dark:text-slate-500">(Interim Statement)</span>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

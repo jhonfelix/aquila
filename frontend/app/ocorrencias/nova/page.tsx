@@ -7,31 +7,31 @@ import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { validate } from '@/lib/validation';
 import { redigirOcorrenciaSchema } from '@/lib/schemas/ocorrencia';
-import type { OcorrenciaGeral, GeografiaCidade, AerodromoGeral, VeiculoLancador } from '@/lib/types';
+import type { OcorrenciaGeral, GeografiaCidade, VeiculoLancador } from '@/lib/types';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
 import { Button, Card, ErrorText, Field, PageContainer, Row, Select, Spinner, errorRingClass, inputClass } from '@/lib/ui';
 import { cn } from '@/lib/cn';
 import {
   CLASSIFICACAO_CHOICES,
-  TIPO_OCORRENCIA_CHOICES,
+  tipoOcorrenciaGroups,
   DANOS_TERCEIROS_CHOICES,
   LOCALIZACAO_TIPO_CHOICES,
+  ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES,
   ORBITA_TIPO_CHOICES,
   AERONAVE_TIPO_CHOICES,
   DANOS_ARTEFATO_CHOICES,
   FASE_MISSAO_CHOICES,
 } from '@/lib/choices';
 
-type FormState = Omit<Partial<OcorrenciaGeral>, 'cidade' | 'aerodromo'> & {
+type FormState = Omit<Partial<OcorrenciaGeral>, 'cidade'> & {
   cidade: number | null;
-  aerodromo: number | null;
 };
 
 export default function RedigirOcorrenciaPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
-  const [form, setForm] = useState<FormState>({ cidade: null, aerodromo: null });
+  const [form, setForm] = useState<FormState>({ cidade: null, aerodromo: '' });
   const [artefatoEspacial, setArtefatoEspacial] = useState<number | null>(null);
   const [aeronaveTipo, setAeronaveTipo] = useState('');
   const [operador, setOperador] = useState('');
@@ -124,7 +124,7 @@ export default function RedigirOcorrenciaPage() {
                   <Select
                     value={form.tipo || ''}
                     onChange={(v) => set('tipo', v)}
-                    choices={TIPO_OCORRENCIA_CHOICES}
+                    groups={tipoOcorrenciaGroups(aeronaveTipo)}
                     required
                     className={fieldErrors.tipo ? errorRingClass : undefined}
                   />
@@ -181,15 +181,12 @@ export default function RedigirOcorrenciaPage() {
                     invalid={!!fieldErrors.cidade}
                   />
                 </Field>
-                <Field label="Organização do segmento espacial (Aeródromo/Centro de Lançamento)" error={fieldErrors.aerodromo}>
-                  <AsyncCombobox
-                    apiPath="/api/taxonomia/aerodromos/"
-                    value={form.aerodromo}
-                    onChange={(id) => set('aerodromo', id)}
-                    getLabel={(a: AerodromoGeral) => a.nome}
-                    placeholder="Buscar organização…"
+                <Field label="Organização do segmento espacial" error={fieldErrors.aerodromo}>
+                  <Select
+                    value={form.aerodromo || ''}
+                    onChange={(v) => set('aerodromo', v)}
+                    choices={ORGANIZACAO_SEGMENTO_ESPACIAL_CHOICES}
                     required
-                    invalid={!!fieldErrors.aerodromo}
                   />
                 </Field>
               </Row>
@@ -225,7 +222,15 @@ export default function RedigirOcorrenciaPage() {
               </Field>
               <Row cols={3}>
                 <Field label="Tipo">
-                  <Select value={aeronaveTipo} onChange={setAeronaveTipo} choices={AERONAVE_TIPO_CHOICES} />
+                  <Select
+                    value={aeronaveTipo}
+                    onChange={(v) => {
+                      setAeronaveTipo(v);
+                      // Tipo da ocorrência depende do tipo de artefato: limpa se deixou de ser válido.
+                      if (form.tipo && !tipoOcorrenciaGroups(v).some((g) => g.choices.some(([k]) => k === form.tipo))) set('tipo', '');
+                    }}
+                    choices={AERONAVE_TIPO_CHOICES}
+                  />
                 </Field>
                 <Field label="Operador / Proprietário">
                   <input className={inputClass} type="text" value={operador} onChange={(e) => setOperador(e.target.value)} />
