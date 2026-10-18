@@ -12,6 +12,7 @@ export default function FormulariosListPage() {
       createHref="/material-apoio/formularios/nova"
       createLabel="Novo Formulário"
       rowHref={(item) => `/material-apoio/formularios/${item.id}`}
+      showEditAction
       columns={MATERIAL_APOIO_COLUMNS}
     />
   );

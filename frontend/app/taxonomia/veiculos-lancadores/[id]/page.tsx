@@ -32,6 +32,7 @@ export default function EditarVeiculoPage() {
   return (
     <ResourceFormPage
       apiPath="/api/taxonomia/veiculos-lancadores/"
+      auditContentType="taxonomia.veiculolancador"
       id={id}
       title="Editar Veículo Lançador"
       fields={FIELDS}

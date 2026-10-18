@@ -133,6 +133,7 @@ export type OcorrenciaDocumento = {
   ocorrencia: number;
   tipo_documento: string | null;
   arquivo: string | null;
+  descricao: string | null;
   cadastrado_por_id: number | null;
   cadastrado_em: string;
 };

@@ -41,9 +41,76 @@ export const artefatoTabSchema = z.object({
   artefato_espacial: requiredId('Selecione o artefato espacial'),
 });
 
-// Aba Gestão, formulário "Adicionar Membro" — só `investigador`.
+const optionalText = (max: number) => z.string().trim().max(max, `Máximo ${max} caracteres`).optional().nullable();
+// Arquivo de <input type="file"> — o estado guarda File | null.
+const requiredFile = (message: string) => z.any().refine((v) => v != null, { message });
+
+// Aba Gestão, formulário "Adicionar Membro" — só `investigador` é
+// obrigatório; os textos respeitam o max_length de OcorrenciaComissao.
 export const comissaoMembroSchema = z.object({
   investigador: requiredId('Selecione o investigador'),
+  observacoes: optionalText(200),
+  identificacao_rai: optionalText(100),
+});
+
+// RAI seção 15 — edição avulsa da identificação de um membro.
+export const comissaoIdentificacaoSchema = z.object({
+  identificacao_rai: optionalText(100),
+});
+
+// Aba Controle — tudo opcional em OcorrenciaControle; só o texto livre
+// tem limite.
+export const controleTabSchema = z.object({
+  numero_relatorio: optionalText(100),
+});
+
+// Aba Documentos — o envio só faz sentido com arquivo (o botão já exigia).
+export const documentoUploadSchema = z.object({
+  arquivo: requiredFile('Selecione o arquivo'),
+  descricao: optionalText(2000),
+});
+
+// Aba Internacional — OcorrenciaAsoaci, tudo opcional.
+export const asoaciTabSchema = z.object({
+  destino_notificacao: optionalText(100),
+  nome_rep_acred: optionalText(100),
+});
+
+// Aba Divulgação — OcorrenciaRelatorio, tudo opcional.
+export const divulgacaoTabSchema = z.object({
+  comunicar_elos: optionalText(100),
+});
+
+// Aba Divulgação, "Adicionar Recomendação" — `descricao` é obrigatória.
+export const recomendacaoSchema = z.object({
+  descricao: requiredValue('Informe a descrição da recomendação'),
+});
+
+// Painel de Revisão RF, "Fazer Feedback" — setor e comentário já eram
+// `required` no JSX.
+export const revisaoFeedbackSchema = z.object({
+  setor: requiredChoice('Selecione a área/setor'),
+  comentario: requiredValue('Informe o comentário'),
+});
+
+// RAI seção 3 — Pessoal Envolvido. O botão já exigia `nome`.
+export const raiPessoalSchema = z.object({
+  nome: z.string().trim().min(1, 'Informe o nome').max(200, 'Máximo 200 caracteres'),
+  funcao: optionalText(100),
+});
+
+// RAI seção 10 — Fotografias (até 15; o input já usava min=1 max=15).
+export const raiFotoSchema = z.object({
+  arquivo: requiredFile('Selecione a imagem'),
+  numero: z
+    .union([z.string(), z.number(), z.null(), z.undefined()])
+    .refine((v) => {
+      if (v == null || v === '') return true;
+      const n = Number(v);
+      return Number.isInteger(n) && n >= 1 && n <= 15;
+    }, 'Número entre 1 e 15')
+    .optional(),
+  descricao: optionalText(300),
 });
 
 // ── RAI (Relatório de Ação Inicial) ──
@@ -65,23 +132,34 @@ function asNumberOrEmpty(v: unknown): number | null {
   return Number.isNaN(n) ? NaN : n;
 }
 
+// `.optional()` no fim: sem ele o Zod 4 rejeita a chave ausente (campo
+// nunca tocado) com "expected nonoptional".
 const optionalNumericString = (message = 'Deve ser um número válido') =>
-  z.union([z.string(), z.number(), z.null(), z.undefined()]).refine((v) => {
-    const n = asNumberOrEmpty(v);
-    return n === null || !Number.isNaN(n);
-  }, message);
+  z
+    .union([z.string(), z.number(), z.null(), z.undefined()])
+    .refine((v) => {
+      const n = asNumberOrEmpty(v);
+      return n === null || !Number.isNaN(n);
+    }, message)
+    .optional();
 
 const rangedNumericString = (min: number, max: number, message: string) =>
-  z.union([z.string(), z.number(), z.null(), z.undefined()]).refine((v) => {
-    const n = asNumberOrEmpty(v);
-    return n === null || (!Number.isNaN(n) && n >= min && n <= max);
-  }, message);
+  z
+    .union([z.string(), z.number(), z.null(), z.undefined()])
+    .refine((v) => {
+      const n = asNumberOrEmpty(v);
+      return n === null || (!Number.isNaN(n) && n >= min && n <= max);
+    }, message)
+    .optional();
 
 const nonNegativeNumericString = (message = 'Deve ser zero ou positivo') =>
-  z.union([z.string(), z.number(), z.null(), z.undefined()]).refine((v) => {
-    const n = asNumberOrEmpty(v);
-    return n === null || (!Number.isNaN(n) && n >= 0);
-  }, message);
+  z
+    .union([z.string(), z.number(), z.null(), z.undefined()])
+    .refine((v) => {
+      const n = asNumberOrEmpty(v);
+      return n === null || (!Number.isNaN(n) && n >= 0);
+    }, message)
+    .optional();
 
 export const raiFormSchema = z.object({
   ano_fabricacao_rai: rangedNumericString(1900, currentYearRai + 1, `Ano entre 1900 e ${currentYearRai + 1}`),

@@ -10,6 +10,7 @@ export default function UfsListPage() {
       createHref="/taxonomia/ufs/nova"
       createLabel="Nova UF"
       rowHref={(item) => `/taxonomia/ufs/${item.id}`}
+      showEditAction
       columns={[
         { key: 'nome', label: 'Nome' },
         { key: 'nome_codigo', label: 'Código' },

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search } from 'lucide-react';
 import { apiFetch, fetchMe } from '@/lib/api';
 import type { Paginated } from '@/lib/types';
 import AppShell from '@/components/AppShell';
@@ -26,6 +26,9 @@ type Props = {
   createLabel?: string;
   extraQuery?: string; // ex: '&categoria=FORMULARIO'
   searchPlaceholder?: string;
+  // Coluna "Ações" com botão Editar explícito (leva ao mesmo `rowHref`) —
+  // o clique na linha continua funcionando, mas não é descobrível sozinho.
+  showEditAction?: boolean;
 };
 
 // Lista genérica reusada por todas as telas CRUD mecanicamente similares
@@ -40,6 +43,7 @@ export default function ResourceListPage({
   createLabel,
   extraQuery,
   searchPlaceholder,
+  showEditAction,
 }: Props) {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
@@ -116,6 +120,7 @@ export default function ResourceListPage({
                       {c.label}
                     </th>
                   ))}
+                  {showEditAction && <th className="w-px px-4 py-3 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody>
@@ -130,11 +135,24 @@ export default function ResourceListPage({
                         {c.render ? c.render(item) : item[c.key] ?? '-'}
                       </td>
                     ))}
+                    {showEditAction && (
+                      <td className="whitespace-nowrap px-4 py-2 text-right">
+                        <Link
+                          href={rowHref(item)}
+                          onClick={(e) => e.stopPropagation()}
+                          className={buttonClass('secondary', 'px-2.5 py-1.5 text-xs')}
+                          title="Editar"
+                        >
+                          <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                          Editar
+                        </Link>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {data.results.length === 0 && (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={columns.length}>
+                    <td className="px-4 py-8 text-center text-slate-400 dark:text-slate-500" colSpan={columns.length + (showEditAction ? 1 : 0)}>
                       Nenhum registro encontrado.
                     </td>
                   </tr>

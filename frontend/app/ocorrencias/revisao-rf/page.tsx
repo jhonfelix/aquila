@@ -4,16 +4,18 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ArrowDownWideNarrow, Calendar, ChevronDown, ChevronUp, Download, FilterX, History, MessageSquareText, Send, X } from 'lucide-react';
+import { ArrowDownWideNarrow, Calendar, CheckCircle2, ChevronDown, ChevronUp, Download, FilterX, History, MessageSquareText, Send, X } from 'lucide-react';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { validate } from '@/lib/validation';
+import { revisaoFeedbackSchema } from '@/lib/schemas/ocorrencia';
 import type { OcorrenciaRevisaoRelatorio, OcorrenciaRevisaoRelatorioFeedback, Paginated, RevisaoPainelRow, Usuario } from '@/lib/types';
 import { CLASSIFICACAO_CHOICES, FEEDBACK_SETOR_CHOICES, REVISAO_SETOR_CHOICES } from '@/lib/choices';
 import { formatUsuario, formatShortDate, formatRelative } from '@/lib/format';
 import AppShell from '@/components/AppShell';
 import AsyncCombobox from '@/components/AsyncCombobox';
 import Pagination from '@/components/Pagination';
-import { Badge, Button, ErrorText, Field, PageContainer, Select, Spinner, fileInputClass, inputClass } from '@/lib/ui';
+import { Badge, Button, ErrorText, Field, PageContainer, Select, Spinner, errorRingClass, fileInputClass, inputClass } from '@/lib/ui';
 import { cn } from '@/lib/cn';
 
 const userLabel = (u: Usuario) => formatUsuario(u);
@@ -36,12 +38,15 @@ function AcaoDropdown({
   onHistorico,
   onEncaminhar,
   onFeedback,
+  onFinalizar,
 }: {
   row: RevisaoPainelRow;
   onHistorico: () => void;
   onEncaminhar: () => void;
   onFeedback: () => void;
+  onFinalizar: () => void;
 }) {
+  const podeFinalizar = row.setor === 'DIVULGACAO';
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -77,6 +82,17 @@ function AcaoDropdown({
           >
             <MessageSquareText className="h-4 w-4" strokeWidth={1.75} />
             Fazer Feedback
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator className="my-1 border-t border-mist-200 dark:border-space-700" />
+          {/* Só finaliza quando a etapa atual está no setor Divulgação (regra repetida no backend). */}
+          <DropdownMenu.Item
+            onClick={onFinalizar}
+            disabled={!podeFinalizar}
+            title={podeFinalizar ? undefined : 'Disponível apenas quando a revisão estiver no setor Divulgação'}
+            className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm text-slate-700 outline-none transition-colors hover:bg-mist-100 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[disabled]:hover:bg-transparent dark:text-slate-200 dark:hover:bg-space-800"
+          >
+            <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />
+            Finalizar Revisão
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -182,12 +198,71 @@ function EncaminharModal({ row, onClose, onSaved }: { row: RevisaoPainelRow; onC
   );
 }
 
+function FinalizarModal({ row, onClose, onSaved }: { row: RevisaoPainelRow; onClose: () => void; onSaved: () => void }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConfirm() {
+    setError(null);
+    setSaving(true);
+    try {
+      await primeCsrf();
+      await apiFetch(`/api/ocorrencia/revisao-relatorio/finalizar/?ocorrencia=${row.ocorrencia_id}`, { method: 'POST' });
+      toast.success('Revisão finalizada');
+      onSaved();
+      onClose();
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Erro ao finalizar revisão.';
+      setError(message);
+      toast.error('Erro ao finalizar revisão', message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-6 shadow-popover dark:bg-space-900">
+          <div className="mb-4 flex items-center justify-between">
+            <Dialog.Title className="text-base font-semibold text-slate-900 dark:text-slate-100">Finalizar Revisão</Dialog.Title>
+            <Dialog.Close className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+              <X className="h-4 w-4" strokeWidth={2} />
+            </Dialog.Close>
+          </div>
+          <Dialog.Description className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            Confirma que deseja finalizar a revisão de{' '}
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {row.artefatos.length > 0 ? row.artefatos.map((a) => a.nome).join(', ') : `Ocorrência #${row.ocorrencia_id}`}
+            </span>
+            ? A investigação passará para a fase FIM, com situação FINALIZADA.
+          </Dialog.Description>
+
+          <ErrorText>{error}</ErrorText>
+
+          <div className="mt-2 flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleConfirm} disabled={saving}>
+              {saving ? <Spinner className="text-white" /> : <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />}
+              Finalizar revisão
+            </Button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 function FeedbackModal({ row, readOnly, onClose }: { row: RevisaoPainelRow; readOnly?: boolean; onClose: () => void }) {
   const [feedbacks, setFeedbacks] = useState<OcorrenciaRevisaoRelatorioFeedback[] | null>(null);
   const [setor, setSetor] = useState('');
   const [comentario, setComentario] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   function loadFeedbacks() {
     apiFetch<Paginated<OcorrenciaRevisaoRelatorioFeedback> | OcorrenciaRevisaoRelatorioFeedback[]>(
@@ -202,8 +277,15 @@ function FeedbackModal({ row, readOnly, onClose }: { row: RevisaoPainelRow; read
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!comentario.trim() || !setor) return;
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(revisaoFeedbackSchema, { setor, comentario });
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -281,13 +363,19 @@ function FeedbackModal({ row, readOnly, onClose }: { row: RevisaoPainelRow; read
             <>
               <ErrorText>{error}</ErrorText>
 
-              <form onSubmit={handleSubmit}>
-                <Field label="Área/Setor Relacionado">
-                  <Select value={setor} onChange={setSetor} choices={FEEDBACK_SETOR_CHOICES} required />
+              <form onSubmit={handleSubmit} noValidate>
+                <Field label="Área/Setor Relacionado" error={fieldErrors.setor}>
+                  <Select
+                    value={setor}
+                    onChange={setSetor}
+                    choices={FEEDBACK_SETOR_CHOICES}
+                    required
+                    className={fieldErrors.setor ? errorRingClass : undefined}
+                  />
                 </Field>
-                <Field label="Comentário">
+                <Field label="Comentário" error={fieldErrors.comentario}>
                   <textarea
-                    className={cn(inputClass, 'min-h-[80px]')}
+                    className={cn(inputClass, 'min-h-[80px]', fieldErrors.comentario && errorRingClass)}
                     value={comentario}
                     onChange={(e) => setComentario(e.target.value)}
                     required
@@ -323,6 +411,7 @@ export default function RevisaoRfPainelPage() {
   const [encaminharFor, setEncaminharFor] = useState<RevisaoPainelRow | null>(null);
   const [feedbackFor, setFeedbackFor] = useState<RevisaoPainelRow | null>(null);
   const [feedbackViewFor, setFeedbackViewFor] = useState<RevisaoPainelRow | null>(null);
+  const [finalizarFor, setFinalizarFor] = useState<RevisaoPainelRow | null>(null);
 
   const [setorFiltro, setSetorFiltro] = useState('');
   const [revisorFiltro, setRevisorFiltro] = useState<number | null>(null);
@@ -500,6 +589,7 @@ export default function RevisaoRfPainelPage() {
                         onHistorico={() => setHistoricoFor(row)}
                         onEncaminhar={() => setEncaminharFor(row)}
                         onFeedback={() => setFeedbackFor(row)}
+                        onFinalizar={() => setFinalizarFor(row)}
                       />
                     </td>
                   </tr>
@@ -612,6 +702,9 @@ export default function RevisaoRfPainelPage() {
 
         {feedbackFor && <FeedbackModal row={feedbackFor} onClose={() => setFeedbackFor(null)} />}
         {feedbackViewFor && <FeedbackModal row={feedbackViewFor} readOnly onClose={() => setFeedbackViewFor(null)} />}
+        {finalizarFor && (
+          <FinalizarModal row={finalizarFor} onClose={() => setFinalizarFor(null)} onSaved={() => loadRows(page)} />
+        )}
       </PageContainer>
     </AppShell>
   );

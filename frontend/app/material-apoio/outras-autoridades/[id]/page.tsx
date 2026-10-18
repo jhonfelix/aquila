@@ -25,6 +25,7 @@ export default function EditarInvestigacaoPage() {
   return (
     <ResourceFormPage
       apiPath="/api/material-apoio/investigacoes-outras-autoridades/"
+      auditContentType="material_apoio.investigacaooutrasautoridades"
       id={id}
       title="Editar Investigação"
       fields={FIELDS}

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django import forms
 from unfold.admin import ModelAdmin
 from unfold.widgets import CHECKBOX_CLASSES, LABEL_CLASSES
+from ocorrencia.admin import AuditlogHistoryMixin
 from .models import AerodromoGeral, GeografiaCidade, GeografiaPais, GeografiaUf, ArtefatoEspacial, VeiculoLancador
 
 
@@ -29,17 +30,22 @@ class VeiculoLancadorForm(forms.ModelForm):
         fields = '__all__'
 
 
-admin.site.register(GeografiaPais)
-admin.site.register(GeografiaUf)
+@admin.register(GeografiaPais)
+class GeografiaPaisAdmin(AuditlogHistoryMixin, admin.ModelAdmin):
+    pass
+
+@admin.register(GeografiaUf)
+class GeografiaUfAdmin(AuditlogHistoryMixin, admin.ModelAdmin):
+    pass
 
 @admin.register(ArtefatoEspacial)
-class ArtefatoEspacialAdmin(ModelAdmin):
+class ArtefatoEspacialAdmin(AuditlogHistoryMixin, ModelAdmin):
     list_display = ('id', 'designacao', 'fabricante', 'tipo_artefato', 'status')
     list_display_links = ('designacao',)
     search_fields = ['designacao', 'fabricante']
 
 @admin.register(VeiculoLancador)
-class VeiculoLancadorAdmin(ModelAdmin):
+class VeiculoLancadorAdmin(AuditlogHistoryMixin, ModelAdmin):
     form = VeiculoLancadorForm
     list_display = ('id', 'artefato', 'tipo_propulsao', 'propelente_display', 'numero_estagios', 'reutilizavel')
     list_display_links = ('artefato',)
@@ -53,7 +59,7 @@ class VeiculoLancadorAdmin(ModelAdmin):
     propelente_display.short_description = "Propelente"
 
 @admin.register(GeografiaCidade)
-class GeografiaCidadeAdmin(ModelAdmin):
+class GeografiaCidadeAdmin(AuditlogHistoryMixin, ModelAdmin):
     fields = ['nome']
     search_fields = ['nome']
     def get_search_results(self, request, queryset, search_term):
@@ -62,7 +68,7 @@ class GeografiaCidadeAdmin(ModelAdmin):
         return results
 
 @admin.register(AerodromoGeral)
-class AerodromoGeralAdmin(ModelAdmin):
+class AerodromoGeralAdmin(AuditlogHistoryMixin, ModelAdmin):
     fields = ['nome', 'icao']
     search_fields = ['nome']
     def get_search_results(self, request, queryset, search_term):

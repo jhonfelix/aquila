@@ -3,7 +3,7 @@
 import ResourceListPage from '@/components/crud/ResourceListPage';
 import { MATERIAL_APOIO_COLUMNS } from '@/lib/materialApoioColumns';
 
-const CATEGORIAS_NORMA = 'NORMA,LEGISLACAO,REGULAMENTO,INSTRUCAO,PROCEDIMENTO,MANUAL';
+const CATEGORIAS_NORMA = 'NORMA,LEGISLACAO,REGULAMENTO,INSTRUCAO,PROCEDIMENTO,MANUAL,SEM_CATEGORIA';
 
 export default function NormasListPage() {
   return (
@@ -14,6 +14,7 @@ export default function NormasListPage() {
       createHref="/material-apoio/normas-legislacao/nova"
       createLabel="Nova Norma"
       rowHref={(item) => `/material-apoio/normas-legislacao/${item.id}`}
+      showEditAction
       columns={MATERIAL_APOIO_COLUMNS}
     />
   );

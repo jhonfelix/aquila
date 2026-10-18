@@ -33,6 +33,7 @@ export default function EditarFormularioPage() {
   return (
     <ResourceFormPage
       apiPath="/api/material-apoio/materiais/"
+      auditContentType="material_apoio.materialapoio"
       id={id}
       title="Editar Formulário"
       fields={FIELDS}

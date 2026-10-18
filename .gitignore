@@ -1,27 +1,16 @@
-# Segredos
-.env
-*.env.local
+# Ignora tudo na raiz, exceto as pastas abaixo
+/*
+!/.gitignore
+!/backend/
+!/frontend/
+!/nginx/
 
-# Dados de runtime (não são código)
-mysql/
-backend/media/
-backend/staticfiles/
-
-# Node / Next.js
+# Artefatos gerados dentro das pastas versionadas
 node_modules/
 .next/
-next-env.d.ts
-
-# Python
-.venv/
 __pycache__/
 *.pyc
-db.sqlite3
-
-# Claude Code (config/estado local, não código do projeto)
-.claude/
-
-# Arquivos avulsos na raiz, não fazem parte do código-fonte
-README.md
-README.zip
-Captura de tela*.png
+.env
+.env.*
+/backend/media/
+*.tsbuildinfo

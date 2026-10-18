@@ -158,10 +158,9 @@ class OcorrenciaAeronave(models.Model):
     operador_detalhe = models.CharField(null=True, max_length=100, blank=True, verbose_name="Detalhes do Operador / proprietário")
 
     TIPO_CHOICES = [
+        ('Veículo lançador', 'Veículo lançador'),
+        ('Veículo suborbital', 'Veículo suborbital'),
         ('Satélite', 'Satélite'),
-        ('Estágio de foguete', 'Estágio de foguete'),
-        ('Cápsula', 'Cápsula'),
-        ('Sonda', 'Sonda'),
     ]
     tipo = models.CharField(null=True, max_length=25, blank=True, choices=TIPO_CHOICES, verbose_name="Tipo")
 
@@ -464,7 +463,7 @@ CHECKLIST_ITENS_PADRAO_SATELITE = [
 
 def checklist_itens_padrao(tipo_artefato):
     """Itens padrão para o tipo de artefato; vazio se não houver anexo correspondente."""
-    if tipo_artefato == 'Estágio de foguete':
+    if tipo_artefato in ('Veículo lançador', 'Veículo suborbital'):
         return CHECKLIST_ITENS_PADRAO_FOGUETE
     if tipo_artefato == 'Satélite':
         return CHECKLIST_ITENS_PADRAO_SATELITE
@@ -685,6 +684,7 @@ class OcorrenciaDocumento(models.Model):
         max_length=255,
         verbose_name='Arquivo (upload)',
     )
+    descricao = models.TextField(null=True, blank=True, verbose_name='Informações do documento')
     cadastrado_por_id = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
     cadastrado_em = models.DateField(auto_now_add=True, null=True, blank=True)
 

@@ -53,7 +53,6 @@ export default function NovoUsuarioPage() {
       title="Novo Usuário"
       fields={FIELDS}
       listHref="/usuarios"
-      wide
       schema={usuarioCreateSchema}
     />
   );

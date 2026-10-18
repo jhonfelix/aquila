@@ -52,7 +52,7 @@ export default function LoginPage() {
             <Rocket className="h-7 w-7" strokeWidth={2} />
           </span>
           <h1 className="text-3xl font-bold tracking-[0.15em] text-white">ÁQUILA</h1>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Sistema de Gestão de Ocorrências Espaciais</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais</p>
         </div>
         <form
           onSubmit={handleSubmit}

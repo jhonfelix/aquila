@@ -1,7 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  // `lib/` entra aqui porque o design system (lib/ui.tsx) declara classes
+  // próprias — sem ele, variantes usadas só lá (ex.: o estado marcado do
+  // Checkbox) não eram geradas.
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {

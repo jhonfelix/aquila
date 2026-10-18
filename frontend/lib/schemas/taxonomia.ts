@@ -70,14 +70,17 @@ export const artefatoEspacialSchema = z.object({
     .union([z.number(), z.null(), z.undefined()])
     .refine((v) => v == null || (Number.isInteger(v) && v >= 1900 && v <= currentYear + 1), {
       message: `Ano entre 1900 e ${currentYear + 1}`,
-    }),
+    })
+    .optional(),
   status: optionalText(50),
 });
 
+// `.optional()` no fim: sem ele o Zod 4 rejeita a chave ausente (campo
+// nunca tocado no form de criação) com "expected nonoptional".
 const nonNegative = (message = 'Deve ser zero ou positivo') =>
-  z.union([z.number(), z.null(), z.undefined()]).refine((v) => v == null || v >= 0, { message });
+  z.union([z.number(), z.null(), z.undefined()]).refine((v) => v == null || v >= 0, { message }).optional();
 const nonNegativeInt = (message = 'Deve ser um número inteiro positivo') =>
-  z.union([z.number(), z.null(), z.undefined()]).refine((v) => v == null || (Number.isInteger(v) && v >= 0), { message });
+  z.union([z.number(), z.null(), z.undefined()]).refine((v) => v == null || (Number.isInteger(v) && v >= 0), { message }).optional();
 
 export const veiculoLancadorSchema = z.object({
   artefato: requiredId('Selecione o artefato espacial'),

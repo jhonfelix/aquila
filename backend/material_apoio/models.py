@@ -38,7 +38,7 @@ class MaterialApoio(models.Model):
     ]
 
     titulo = models.CharField(max_length=300, verbose_name="Título")
-    categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, verbose_name="Categoria")
+    categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, null=True, blank=True, verbose_name="Categoria")
     tipo_documento = models.CharField(max_length=50, choices=TIPO_DOCUMENTO_CHOICES, verbose_name="Tipo de Documento")
     numero_norma = models.CharField(max_length=100, null=True, blank=True, verbose_name="Número da Norma")
     divisao_responsavel = models.CharField(max_length=200, null=True, blank=True, verbose_name="Divisão Responsável")
@@ -112,7 +112,9 @@ class InvestigacaoOutrasAutoridades(models.Model):
 
 class NormaLegislacaoManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(categoria__in=MaterialApoio.CATEGORIAS_NORMA)
+        return super().get_queryset().filter(
+            models.Q(categoria__in=MaterialApoio.CATEGORIAS_NORMA) | models.Q(categoria__isnull=True) | models.Q(categoria='')
+        )
 
 
 class NormaLegislacao(MaterialApoio):

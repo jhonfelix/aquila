@@ -11,6 +11,7 @@ export default function ArtefatosListPage() {
       createHref="/taxonomia/artefatos-espaciais/nova"
       createLabel="Novo Artefato"
       rowHref={(item) => `/taxonomia/artefatos-espaciais/${item.id}`}
+      showEditAction
       columns={[
         { key: 'designacao', label: 'Designação' },
         {

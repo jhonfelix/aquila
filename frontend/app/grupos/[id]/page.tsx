@@ -28,7 +28,6 @@ export default function EditarGrupoPage() {
       title="Editar Grupo"
       fields={FIELDS}
       listHref="/grupos"
-      wide
       schema={grupoSchema}
     />
   );

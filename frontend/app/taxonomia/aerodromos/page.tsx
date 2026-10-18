@@ -10,6 +10,7 @@ export default function AerodromosListPage() {
       createHref="/taxonomia/aerodromos/nova"
       createLabel="Novo Aeródromo"
       rowHref={(item) => `/taxonomia/aerodromos/${item.id}`}
+      showEditAction
       columns={[
         { key: 'icao', label: 'ICAO' },
         { key: 'iata', label: 'IATA' },

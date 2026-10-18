@@ -431,7 +431,7 @@ class OcorrenciaControleInline(StackedInline):
 
 class OcorrenciaDocumentoInline(TabularInline):
     model = OcorrenciaDocumento
-    fields = ('tipo_documento', 'arquivo', 'cadastrado_por_id', 'cadastrado_em')
+    fields = ('tipo_documento', 'arquivo', 'descricao', 'cadastrado_por_id', 'cadastrado_em')
     readonly_fields = ('cadastrado_em', 'cadastrado_por_id')
     extra = 0
     verbose_name_plural = "DOCUMENTOS"
@@ -1168,7 +1168,7 @@ class OcorrenciaDocumentoAdmin(AuditlogHistoryMixin, ModelAdmin):
             'fields': ('ocorrencia',),
         }),
         ('Documento', {
-            'fields': ('tipo_documento', 'arquivo'),
+            'fields': ('tipo_documento', 'arquivo', 'descricao'),
             
         }),
         ('Cadastro', {

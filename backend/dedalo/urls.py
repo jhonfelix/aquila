@@ -4,9 +4,9 @@ from django.conf import settings
 
 from dedalo.media_views import protected_media
 
-admin.site.site_header = "ÁQUILA"
-admin.site.site_title = "Sistema de Gestão de Ocorrências Espaciais"
-admin.site.index_title = "Sistema de Gestão de Ocorrências Espaciais"
+admin.site.site_header = "Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais - ÁQUILA"
+admin.site.site_title = "Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais"
+admin.site.index_title = "Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais"
 
 urlpatterns = [
     path('2fa/', include('usuario.urls')),

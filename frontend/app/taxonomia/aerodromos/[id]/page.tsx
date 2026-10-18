@@ -27,6 +27,7 @@ export default function EditarAerodromoPage() {
   return (
     <ResourceFormPage
       apiPath="/api/taxonomia/aerodromos/"
+      auditContentType="taxonomia.aerodromogeral"
       id={id}
       title="Editar Aeródromo"
       fields={FIELDS}

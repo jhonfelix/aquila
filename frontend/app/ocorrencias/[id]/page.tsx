@@ -8,7 +8,16 @@ import { ChevronDown, Download, History, Plus, Trash2, Upload, X } from 'lucide-
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { validate } from '@/lib/validation';
-import { geralTabSchema, artefatoTabSchema, comissaoMembroSchema } from '@/lib/schemas/ocorrencia';
+import {
+  geralTabSchema,
+  artefatoTabSchema,
+  comissaoMembroSchema,
+  controleTabSchema,
+  documentoUploadSchema,
+  asoaciTabSchema,
+  divulgacaoTabSchema,
+  recomendacaoSchema,
+} from '@/lib/schemas/ocorrencia';
 import { formatUsuario, formatShortDate } from '@/lib/format';
 import type {
   OcorrenciaGeral,
@@ -753,6 +762,7 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
   const [loaded, setLoaded] = useState(false);
   const [form, setForm] = useState<Partial<OcorrenciaControle>>({});
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [confirmacao, setConfirmacao] = useState<OcorrenciaConfirmacao | null>(null);
   const [autenticacao, setAutenticacao] = useState<OcorrenciaAutenticacao | null>(null);
   const [confirmadoPor, setConfirmadoPor] = useState<Usuario | null>(null);
@@ -790,6 +800,15 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(controleTabSchema, form);
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      setError('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -864,8 +883,13 @@ function ControleTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setErro
           <Field label="Tipo de Relatório a Produzir">
             <Select value={form.tipo_relatorio || ''} onChange={(v) => set('tipo_relatorio', v)} choices={CONTROLE_TIPO_RELATORIO_CHOICES} />
           </Field>
-          <Field label="Número do Relatório">
-            <input className={inputClass} type="text" value={form.numero_relatorio || ''} onChange={(e) => set('numero_relatorio', e.target.value)} />
+          <Field label="Número do Relatório" error={fieldErrors.numero_relatorio}>
+            <input
+              className={cn(inputClass, fieldErrors.numero_relatorio && errorRingClass)}
+              type="text"
+              value={form.numero_relatorio || ''}
+              onChange={(e) => set('numero_relatorio', e.target.value)}
+            />
           </Field>
         </div>
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
@@ -946,7 +970,7 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
     setError(null);
     setFieldErrors({});
 
-    const result = validate(comissaoMembroSchema, { investigador });
+    const result = validate(comissaoMembroSchema, { investigador, observacoes, identificacao_rai: identificacaoRai });
     if (result.errors) {
       setFieldErrors(result.errors);
       return;
@@ -1030,11 +1054,21 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
                 <Field label="Função">
                   <Select value={funcao} onChange={setFuncao} choices={COMISSAO_FUNCAO_CHOICES} />
                 </Field>
-                <Field label="Observações">
-                  <input className={inputClass} type="text" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+                <Field label="Observações" error={fieldErrors.observacoes}>
+                  <input
+                    className={cn(inputClass, fieldErrors.observacoes && errorRingClass)}
+                    type="text"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                  />
                 </Field>
-                <Field label="Identificação no RAI" hint="Ex.: nº portaria">
-                  <input className={inputClass} type="text" value={identificacaoRai} onChange={(e) => setIdentificacaoRai(e.target.value)} />
+                <Field label="Identificação no RAI" hint="Ex.: nº portaria" error={fieldErrors.identificacao_rai}>
+                  <input
+                    className={cn(inputClass, fieldErrors.identificacao_rai && errorRingClass)}
+                    type="text"
+                    value={identificacaoRai}
+                    onChange={(e) => setIdentificacaoRai(e.target.value)}
+                  />
                 </Field>
               </div>
               <div className="mt-2 flex justify-end gap-3">
@@ -1085,8 +1119,10 @@ function GestaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError:
 function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setError: (e: string | null) => void }) {
   const [docs, setDocs] = useState<OcorrenciaDocumento[]>([]);
   const [tipoDocumento, setTipoDocumento] = useState('');
+  const [descricao, setDescricao] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [uploaders, setUploaders] = useState<Record<number, Usuario>>({});
   const [open, setOpen] = useState(false);
 
@@ -1123,18 +1159,27 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!file) return;
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(documentoUploadSchema, { arquivo: file, descricao });
+    if (result.errors || !file) {
+      setFieldErrors(result.errors || {});
+      return;
+    }
+
     setUploading(true);
     try {
       await primeCsrf();
       const fd = new FormData();
       fd.append('ocorrencia', String(ocorrenciaId));
       if (tipoDocumento) fd.append('tipo_documento', tipoDocumento);
+      if (descricao.trim()) fd.append('descricao', descricao.trim());
       fd.append('arquivo', file);
       await apiFetch('/api/ocorrencia/documentos/', { method: 'POST', body: fd });
       setFile(null);
       setTipoDocumento('');
+      setDescricao('');
       setOpen(false);
       load();
       toast.success('Documento enviado');
@@ -1185,8 +1230,16 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
               <Field label="Tipo de Documento">
                 <Select value={tipoDocumento} onChange={setTipoDocumento} choices={TIPO_DOCUMENTO_CHOICES} />
               </Field>
-              <Field label="Arquivo">
+              <Field label="Arquivo" error={fieldErrors.arquivo}>
                 <input className={fileInputClass} type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              </Field>
+              <Field label="Informações do Documento" error={fieldErrors.descricao}>
+                <textarea
+                  className={cn(inputClass, 'min-h-[80px]')}
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Descreva o conteúdo, origem ou observações sobre o documento"
+                />
               </Field>
               <div className="mt-2 flex justify-end gap-3">
                 <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
@@ -1213,6 +1266,9 @@ function DocumentosTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
                 <p className="truncate text-slate-700 dark:text-slate-300">
                   {TIPO_DOCUMENTO_CHOICES.find(([v]) => v === d.tipo_documento)?.[1] || d.tipo_documento || 'Documento'}
                 </p>
+                {d.descricao && (
+                  <p className="whitespace-pre-line break-words text-xs text-slate-500 dark:text-slate-400">{d.descricao}</p>
+                )}
                 <p className="truncate text-xs text-slate-400 dark:text-slate-500">
                   {uploader ? formatUsuario(uploader) : '-'} {d.cadastrado_em ? `· ${formatShortDate(d.cadastrado_em)}` : ''}
                 </p>
@@ -1251,6 +1307,7 @@ function InternacionalTab({ ocorrenciaId, setError }: { ocorrenciaId: number; se
   const [loaded, setLoaded] = useState(false);
   const [form, setForm] = useState<Partial<OcorrenciaAsoaci>>({});
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     apiFetch<Paginated<OcorrenciaAsoaci>>(`/api/ocorrencia/asoaci/?ocorrencia=${ocorrenciaId}`).then((data) => {
@@ -1268,6 +1325,15 @@ function InternacionalTab({ ocorrenciaId, setError }: { ocorrenciaId: number; se
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(asoaciTabSchema, form);
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      setError('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -1311,8 +1377,13 @@ function InternacionalTab({ ocorrenciaId, setError }: { ocorrenciaId: number; se
           <Field label="Initial Notification">
             <Select value={form.initial_notification || ''} onChange={(v) => set('initial_notification', v)} choices={ASOACI_SIM_NAO_CHOICES} />
           </Field>
-          <Field label="Destinatário / Instituição">
-            <input className={inputClass} type="text" value={form.destino_notificacao || ''} onChange={(e) => set('destino_notificacao', e.target.value)} />
+          <Field label="Destinatário / Instituição" error={fieldErrors.destino_notificacao}>
+            <input
+              className={cn(inputClass, fieldErrors.destino_notificacao && errorRingClass)}
+              type="text"
+              value={form.destino_notificacao || ''}
+              onChange={(e) => set('destino_notificacao', e.target.value)}
+            />
           </Field>
         </div>
         <Field label="Data da Notificação">
@@ -1322,8 +1393,13 @@ function InternacionalTab({ ocorrenciaId, setError }: { ocorrenciaId: number; se
           <Field label="Tem Representante Acreditado?">
             <Select value={form.tem_rep_acred || ''} onChange={(v) => set('tem_rep_acred', v)} choices={ASOACI_REP_ACRED_CHOICES} />
           </Field>
-          <Field label="Nome do Representante">
-            <input className={inputClass} type="text" value={form.nome_rep_acred || ''} onChange={(e) => set('nome_rep_acred', e.target.value)} />
+          <Field label="Nome do Representante" error={fieldErrors.nome_rep_acred}>
+            <input
+              className={cn(inputClass, fieldErrors.nome_rep_acred && errorRingClass)}
+              type="text"
+              value={form.nome_rep_acred || ''}
+              onChange={(e) => set('nome_rep_acred', e.target.value)}
+            />
           </Field>
         </div>
         <Field label="Observações">
@@ -1354,6 +1430,7 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
   const [recomendacaoOpen, setRecomendacaoOpen] = useState(false);
   const [descricaoRecomendacao, setDescricaoRecomendacao] = useState('');
   const [savingRecomendacao, setSavingRecomendacao] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     apiFetch<Paginated<OcorrenciaRelatorio>>(`/api/ocorrencia/relatorio/?ocorrencia=${ocorrenciaId}`).then((data) => {
@@ -1376,8 +1453,15 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
 
   async function handleAddRecomendacao(e: React.FormEvent) {
     e.preventDefault();
-    if (!descricaoRecomendacao.trim()) return;
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(recomendacaoSchema, { descricao: descricaoRecomendacao });
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      return;
+    }
+
     setSavingRecomendacao(true);
     try {
       await primeCsrf();
@@ -1420,6 +1504,15 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(divulgacaoTabSchema, form);
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      setError('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -1480,8 +1573,13 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
           <Field label="Publicar no site e Painel Sipae?">
             <Checkbox checked={!!form.publicar_site_sipae} onChange={(v) => set('publicar_site_sipae', v)} />
           </Field>
-          <Field label="Comunicar aos Elos de Coordenação" hint="Ex: DCTA e/ou RepAcred.">
-            <Select value={form.comunicar_elos || ''} onChange={(v) => set('comunicar_elos', v)} choices={RELATORIO_ELOS_CHOICES} />
+          <Field label="Comunicar aos Elos de Coordenação" hint="Ex: DCTA e/ou RepAcred." error={fieldErrors.comunicar_elos}>
+            <Select
+              value={form.comunicar_elos || ''}
+              onChange={(v) => set('comunicar_elos', v)}
+              choices={RELATORIO_ELOS_CHOICES}
+              className={fieldErrors.comunicar_elos ? errorRingClass : undefined}
+            />
           </Field>
           <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
             <Field label="Data da Assinatura">
@@ -1547,9 +1645,9 @@ function DivulgacaoTab({ ocorrenciaId, setError }: { ocorrenciaId: number; setEr
               </Dialog.Close>
             </div>
             <form onSubmit={handleAddRecomendacao}>
-              <Field label="Descrição da Recomendação">
+              <Field label="Descrição da Recomendação" error={fieldErrors.descricao}>
                 <textarea
-                  className={cn(inputClass, 'min-h-[100px]')}
+                  className={cn(inputClass, 'min-h-[100px]', fieldErrors.descricao && errorRingClass)}
                   value={descricaoRecomendacao}
                   onChange={(e) => setDescricaoRecomendacao(e.target.value)}
                   required

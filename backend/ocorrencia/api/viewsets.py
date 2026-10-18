@@ -432,14 +432,46 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
     serializer_class = ser.OcorrenciaRevisaoRelatorioSerializer
     filterset_fields = ['ocorrencia', 'setor', 'revisor']
 
+    def perform_create(self, serializer):
+        """A primeira etapa ("Iniciar Processo de Revisão") leva o Controle para a fase REV;
+        as etapas seguintes ("Encaminhar Revisão") não mexem na fase."""
+        ocorrencia = serializer.validated_data['ocorrencia']
+        primeira = not OcorrenciaRevisaoRelatorio.objects.filter(ocorrencia=ocorrencia).exists()
+        serializer.save()
+        if primeira:
+            OcorrenciaControle.objects.filter(ocorrencia=ocorrencia).update(fase_atual='REV')
+
     @action(detail=False, methods=['delete'], url_path='excluir-processo')
     def excluir_processo(self, request):
         """Exclui o processo de revisão da ocorrência (todas as etapas) — ação
-        "Excluir revisão" do Controle da Investigação."""
+        "Excluir revisão" do Controle da Investigação. A fase volta para MIN."""
         ocorrencia_id = request.query_params.get('ocorrencia')
         if not ocorrencia_id:
             return Response({'detail': "Informe 'ocorrencia'."}, status=status.HTTP_400_BAD_REQUEST)
         OcorrenciaRevisaoRelatorio.objects.filter(ocorrencia_id=ocorrencia_id).delete()
+        OcorrenciaControle.objects.filter(ocorrencia_id=ocorrencia_id).update(fase_atual='MIN')
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['post'])
+    def finalizar(self, request):
+        """"Finalizar Revisão" do Painel de Revisão RF — Controle vai para fase FIM e
+        situação FINALIZADA; a ocorrência sai do painel. Só é permitido quando a
+        etapa atual (última revisão, mesmo critério do painel) está no setor
+        Divulgação."""
+        ocorrencia_id = request.query_params.get('ocorrencia')
+        if not ocorrencia_id:
+            return Response({'detail': "Informe 'ocorrencia'."}, status=status.HTTP_400_BAD_REQUEST)
+        etapa_atual = OcorrenciaRevisaoRelatorio.objects.filter(ocorrencia_id=ocorrencia_id).order_by('-id').first()
+        if etapa_atual is None:
+            return Response({'detail': 'Ocorrência sem processo de revisão.'}, status=status.HTTP_400_BAD_REQUEST)
+        if etapa_atual.setor != 'DIVULGACAO':
+            return Response(
+                {'detail': 'A revisão só pode ser finalizada quando estiver no setor Divulgação.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        OcorrenciaControle.objects.filter(ocorrencia_id=ocorrencia_id).update(
+            fase_atual='FIM', situacao_investigacao='FINALIZADA',
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
@@ -459,6 +491,7 @@ class OcorrenciaRevisaoRelatorioViewSet(_OcorrenciaChildViewSet):
         rows = (
             OcorrenciaRevisaoRelatorio.objects
             .filter(id__in=Subquery(latest_ids))
+            .exclude(ocorrencia__ocorrencia_controle__fase_atual='FIM')
             .select_related('ocorrencia', 'cadastrado_por', 'revisor')
             .prefetch_related(
                 'ocorrencia__ocorrencia_aeronave',

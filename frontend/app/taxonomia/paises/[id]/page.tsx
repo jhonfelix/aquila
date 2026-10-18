@@ -16,6 +16,7 @@ export default function EditarPaisPage() {
   return (
     <ResourceFormPage
       apiPath="/api/taxonomia/paises/"
+      auditContentType="taxonomia.geografiapais"
       id={id}
       title="Editar País"
       fields={FIELDS}

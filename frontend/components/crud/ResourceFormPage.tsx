@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-import { ArrowLeft, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, History, Save, Trash2, X } from 'lucide-react';
 import type { ZodType } from 'zod';
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
@@ -22,6 +22,7 @@ import {
   PageContainer,
   Select,
   Spinner,
+  buttonClass,
   errorRingClass,
   fileInputClass,
   inputClass,
@@ -50,18 +51,20 @@ type Props = {
   fields: FieldConfig[];
   listHref: string;
   defaultValues?: Record<string, any>;
-  wide?: boolean;
   // Schema opcional validado contra `form` antes do POST/PATCH — evita um
   // round-trip só pra descobrir um campo obrigatório vazio ou mal formatado;
   // o backend continua sendo a validação de verdade (400 ainda é tratado
   // normalmente abaixo).
   schema?: ZodType<any>;
+  // 'app_label.model' do auditlog (ex.: 'taxonomia.geografiapais'); na edição
+  // mostra o botão Histórico apontando para /auditoria/<content type>/<id>.
+  auditContentType?: string;
 };
 
 // Form genérico (create + edit + delete) reusado pelas telas CRUD
 // mecanicamente similares. Um FieldConfig[] descreve os campos; o resto
 // (auth guard, load, save, erros por campo, exclusão) é comum a todas.
-export default function ResourceFormPage({ apiPath, id, title, fields, listHref, defaultValues, wide, schema }: Props) {
+export default function ResourceFormPage({ apiPath, id, title, fields, listHref, defaultValues, schema, auditContentType }: Props) {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [form, setForm] = useState<Record<string, any>>(defaultValues || {});
@@ -129,6 +132,14 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
             continue;
           }
           fd.append(f.name, typeof value === 'boolean' ? String(value) : value);
+        }
+        // Valores fixos sem campo visível (ex.: categoria: 'FORMULARIO')
+        // também precisam ir no multipart — o caminho JSON já os envia via `form`.
+        for (const name of Object.keys(defaultValues || {})) {
+          if (fields.some((f) => f.name === name)) continue;
+          const value = form[name];
+          if (value === null || value === undefined) continue;
+          fd.append(name, typeof value === 'boolean' ? String(value) : value);
         }
         for (const [name, file] of Object.entries(files)) {
           if (file) fd.append(name, file);
@@ -205,12 +216,21 @@ export default function ResourceFormPage({ apiPath, id, title, fields, listHref,
 
   return (
     <AppShell title={title}>
-      <PageContainer wide={wide}>
+      {/* Mesma largura do formulário de Ocorrência. */}
+      <PageContainer wide>
         <Link href={listHref} className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
           Voltar
         </Link>
-        <h1 className="mb-6 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h1>
+          {id != null && auditContentType && (
+            <Link href={`/auditoria/${auditContentType}/${id}`} className={buttonClass('ghost')}>
+              <History className="h-4 w-4" strokeWidth={1.75} />
+              Histórico
+            </Link>
+          )}
+        </div>
 
         <Card>
           <form onSubmit={handleSubmit} noValidate>

@@ -21,7 +21,7 @@ export const formularioSchema = z.object({ ...baseMaterial });
 export const documentoDiversoSchema = z.object({ ...baseMaterial });
 export const normaLegislacaoSchema = z.object({
   ...baseMaterial,
-  categoria: requiredChoice('Selecione a categoria'),
+  categoria: z.string().optional().nullable(),
 });
 
 export const investigacaoOutrasAutoridadesSchema = z.object({

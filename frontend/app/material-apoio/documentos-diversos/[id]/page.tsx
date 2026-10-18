@@ -31,6 +31,7 @@ export default function EditarDocumentoDiversoPage() {
   return (
     <ResourceFormPage
       apiPath="/api/material-apoio/materiais/"
+      auditContentType="material_apoio.materialapoio"
       id={id}
       title="Editar Documento Diverso"
       fields={FIELDS}

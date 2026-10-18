@@ -56,7 +56,6 @@ export default function EditarUsuarioPage() {
       title="Editar Usuário"
       fields={FIELDS}
       listHref="/usuarios"
-      wide
       schema={usuarioEditSchema}
     />
   );

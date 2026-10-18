@@ -10,6 +10,7 @@ export default function PaisesListPage() {
       createHref="/taxonomia/paises/nova"
       createLabel="Novo País"
       rowHref={(item) => `/taxonomia/paises/${item.id}`}
+      showEditAction
       columns={[
         { key: 'nome', label: 'Nome' },
         { key: 'nome_codigo', label: 'Código' },

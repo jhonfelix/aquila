@@ -20,8 +20,8 @@ const jbMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ÁQUILA',
-  description: 'Sistema de Gestão de Ocorrências Espaciais',
+  title: 'Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais - ÁQUILA',
+  description: 'Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais',
 };
 
 // Aplica o tema salvo antes do primeiro paint (evita flash claro→escuro).

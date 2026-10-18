@@ -22,6 +22,7 @@ export default function EditarArtefatoPage() {
   return (
     <ResourceFormPage
       apiPath="/api/taxonomia/artefatos-espaciais/"
+      auditContentType="taxonomia.artefatoespacial"
       id={id}
       title="Editar Artefato Espacial"
       fields={FIELDS}

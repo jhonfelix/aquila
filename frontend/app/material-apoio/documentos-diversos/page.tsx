@@ -12,6 +12,7 @@ export default function DocumentosDiversosListPage() {
       createHref="/material-apoio/documentos-diversos/nova"
       createLabel="Novo Documento"
       rowHref={(item) => `/material-apoio/documentos-diversos/${item.id}`}
+      showEditAction
       columns={MATERIAL_APOIO_COLUMNS}
     />
   );

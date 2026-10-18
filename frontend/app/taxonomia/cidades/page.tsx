@@ -10,6 +10,7 @@ export default function CidadesListPage() {
       createHref="/taxonomia/cidades/nova"
       createLabel="Nova Cidade"
       rowHref={(item) => `/taxonomia/cidades/${item.id}`}
+      showEditAction
       columns={[
         { key: 'nome', label: 'Nome' },
         { key: 'latitude', label: 'Latitude' },

@@ -8,7 +8,7 @@ const requiredText = (max: number, message = 'Campo obrigatório') =>
 const optionalText = (max: number) => z.string().trim().max(max, `Máximo ${max} caracteres`).optional().nullable();
 const requiredChoice = (message: string) => z.string().trim().min(1, message);
 const optionalPositiveInt = (message = 'Deve ser um número positivo') =>
-  z.union([z.number(), z.null(), z.undefined()]).refine((v) => v == null || (Number.isInteger(v) && v > 0), { message });
+  z.union([z.number(), z.null(), z.undefined()]).refine((v) => v == null || (Number.isInteger(v) && v > 0), { message }).optional();
 
 const baseUsuario = {
   email: z.string().trim().min(1, 'Campo obrigatório').email('E-mail inválido'),

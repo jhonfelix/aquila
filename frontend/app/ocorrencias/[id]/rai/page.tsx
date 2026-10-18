@@ -7,7 +7,7 @@ import { ArrowLeft, CheckCircle2, History, Plus, Save, Trash2 } from 'lucide-rea
 import { apiFetch, primeCsrf, fetchMe, ApiError } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { validate } from '@/lib/validation';
-import { raiFormSchema } from '@/lib/schemas/ocorrencia';
+import { raiFormSchema, raiPessoalSchema, raiFotoSchema, comissaoIdentificacaoSchema } from '@/lib/schemas/ocorrencia';
 import { formatUsuario, formatShortDate } from '@/lib/format';
 import type {
   OcorrenciaGeral,
@@ -563,6 +563,7 @@ function PessoalSection({ raiId, setError }: { raiId: number; setError: (e: stri
   const [funcao, setFuncao] = useState('');
   const [lesoes, setLesoes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(() => {
     apiFetch<Paginated<OcorrenciaRaiPessoal>>(`/api/ocorrencia/rai-pessoal/?rai=${raiId}`).then((data) => setItens(data.results));
@@ -573,8 +574,15 @@ function PessoalSection({ raiId, setError }: { raiId: number; setError: (e: stri
   }, [load]);
 
   async function handleAdd() {
-    if (!nome) return;
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(raiPessoalSchema, { nome, funcao });
+    if (result.errors) {
+      setFieldErrors(result.errors);
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -614,11 +622,11 @@ function PessoalSection({ raiId, setError }: { raiId: number; setError: (e: stri
   return (
     <div>
       <div className="mb-4 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
-        <Field label="Nome">
-          <input className={inputClass} type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
+        <Field label="Nome" error={fieldErrors.nome}>
+          <input className={cn(inputClass, fieldErrors.nome && errorRingClass)} type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
         </Field>
-        <Field label="Função no Evento">
-          <input className={inputClass} type="text" value={funcao} onChange={(e) => setFuncao(e.target.value)} />
+        <Field label="Função no Evento" error={fieldErrors.funcao}>
+          <input className={cn(inputClass, fieldErrors.funcao && errorRingClass)} type="text" value={funcao} onChange={(e) => setFuncao(e.target.value)} />
         </Field>
         <Field label="Lesões">
           <Select value={lesoes} onChange={setLesoes} choices={LESAO_TIPO_CHOICES} />
@@ -661,6 +669,7 @@ function FotografiasSection({ raiId, setError }: { raiId: number; setError: (e: 
   const [numero, setNumero] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(() => {
     apiFetch<Paginated<OcorrenciaRaiFoto>>(`/api/ocorrencia/rai-fotos/?rai=${raiId}`).then((data) => setItens(data.results));
@@ -671,8 +680,15 @@ function FotografiasSection({ raiId, setError }: { raiId: number; setError: (e: 
   }, [load]);
 
   async function handleAdd() {
-    if (!file) return;
     setError(null);
+    setFieldErrors({});
+
+    const result = validate(raiFotoSchema, { arquivo: file, numero, descricao });
+    if (result.errors || !file) {
+      setFieldErrors(result.errors || {});
+      return;
+    }
+
     setSaving(true);
     try {
       await primeCsrf();
@@ -714,13 +730,25 @@ function FotografiasSection({ raiId, setError }: { raiId: number; setError: (e: 
   return (
     <div>
       <div className="mb-4 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
-        <Field label="Número">
-          <input className={inputClass} type="number" min="1" max="15" value={numero} onChange={(e) => setNumero(e.target.value)} />
+        <Field label="Número" error={fieldErrors.numero}>
+          <input
+            className={cn(inputClass, fieldErrors.numero && errorRingClass)}
+            type="number"
+            min="1"
+            max="15"
+            value={numero}
+            onChange={(e) => setNumero(e.target.value)}
+          />
         </Field>
-        <Field label="Descrição/Legenda">
-          <input className={inputClass} type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+        <Field label="Descrição/Legenda" error={fieldErrors.descricao}>
+          <input
+            className={cn(inputClass, fieldErrors.descricao && errorRingClass)}
+            type="text"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+          />
         </Field>
-        <Field label="Arquivo">
+        <Field label="Arquivo" error={fieldErrors.arquivo}>
           <input className={fileInputClass} type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         </Field>
       </div>
@@ -792,6 +820,13 @@ function ComissaoSection({ ocorrenciaId, setError }: { ocorrenciaId: number; set
 
   async function handleSaveIdentificacao(id: number) {
     setError(null);
+
+    const result = validate(comissaoIdentificacaoSchema, { identificacao_rai: edits[id] ?? '' });
+    if (result.errors) {
+      setError(`Identificação no RAI: ${result.errors.identificacao_rai}`);
+      return;
+    }
+
     setSaving(id);
     try {
       await primeCsrf();

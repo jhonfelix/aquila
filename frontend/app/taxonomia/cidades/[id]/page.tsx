@@ -18,6 +18,7 @@ export default function EditarCidadePage() {
   return (
     <ResourceFormPage
       apiPath="/api/taxonomia/cidades/"
+      auditContentType="taxonomia.geografiacidade"
       id={id}
       title="Editar Cidade"
       fields={FIELDS}

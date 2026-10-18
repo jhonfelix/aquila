@@ -17,6 +17,7 @@ export default function EditarUfPage() {
   return (
     <ResourceFormPage
       apiPath="/api/taxonomia/ufs/"
+      auditContentType="taxonomia.geografiauf"
       id={id}
       title="Editar UF"
       fields={FIELDS}

@@ -11,6 +11,7 @@ export default function VeiculosListPage() {
       createHref="/taxonomia/veiculos-lancadores/nova"
       createLabel="Novo Veículo"
       rowHref={(item) => `/taxonomia/veiculos-lancadores/${item.id}`}
+      showEditAction
       columns={[
         {
           key: 'tipo_propulsao',

@@ -20,6 +20,6 @@ const FIELDS: FieldConfig[] = [
 
 export default function NovoGrupoPage() {
   return (
-    <ResourceFormPage apiPath="/api/grupos/" title="Novo Grupo" fields={FIELDS} listHref="/grupos" wide schema={grupoSchema} />
+    <ResourceFormPage apiPath="/api/grupos/" title="Novo Grupo" fields={FIELDS} listHref="/grupos" schema={grupoSchema} />
   );
 }

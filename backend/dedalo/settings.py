@@ -161,7 +161,7 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Áquila API',
-    'DESCRIPTION': 'API do Sistema de Gestão de Ocorrências Espaciais (CENIPA)',
+    'DESCRIPTION': 'Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais',
     'VERSION': '0.1.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
@@ -206,7 +206,7 @@ CRISPY_TEMPLATE_PACK = 'unfold_crispy'
 UNFOLD = {
     "SITE_TITLE": "ÁQUILA",
     "SITE_HEADER": "ÁQUILA",
-    "SITE_SUBHEADER": "Sistema de Gestão de Ocorrências Espaciais",
+    "SITE_SUBHEADER": "Sistema de Gestão de Ocorrências e de Coleta e Processamento de Dados de Segurança das Atividades Espaciais",
     "DASHBOARD_CALLBACK": "dedalo.views.dashboard_callback",
     "ENVIRONMENT": "dedalo.settings.environment_callback",
     "SITE_DROPDOWN": [

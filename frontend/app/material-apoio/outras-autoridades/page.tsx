@@ -13,6 +13,7 @@ export default function OutrasAutoridadesListPage() {
       createHref="/material-apoio/outras-autoridades/nova"
       createLabel="Nova Investigação"
       rowHref={(item) => `/material-apoio/outras-autoridades/${item.id}`}
+      showEditAction
       columns={[
         { key: 'titulo', label: 'Título' },
         { key: 'pais', label: 'País' },

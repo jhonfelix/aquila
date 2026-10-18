@@ -85,10 +85,10 @@ export const TIPO_OCORRENCIA_SATELITE_GROUPS: ChoiceGroup[] = [
 
 export const TIPO_OCORRENCIA_GROUPS: ChoiceGroup[] = [...TIPO_OCORRENCIA_FOGUETE_GROUPS, ...TIPO_OCORRENCIA_SATELITE_GROUPS];
 
-// `artefatoTipo`: valor de AERONAVE_TIPO_CHOICES ('Estágio de foguete' | 'Satélite' | ...).
-// Sem artefato definido (ou sonda/cápsula) mostra todos os grupos.
+// `artefatoTipo`: valor de AERONAVE_TIPO_CHOICES ('Veículo lançador' | 'Veículo suborbital' | 'Satélite').
+// Sem artefato definido mostra todos os grupos.
 export function tipoOcorrenciaGroups(artefatoTipo?: string | null): ChoiceGroup[] {
-  if (artefatoTipo === 'Estágio de foguete') return TIPO_OCORRENCIA_FOGUETE_GROUPS;
+  if (artefatoTipo === 'Veículo lançador' || artefatoTipo === 'Veículo suborbital') return TIPO_OCORRENCIA_FOGUETE_GROUPS;
   if (artefatoTipo === 'Satélite') return TIPO_OCORRENCIA_SATELITE_GROUPS;
   return TIPO_OCORRENCIA_GROUPS;
 }
@@ -125,10 +125,9 @@ export const ORBITA_TIPO_CHOICES = [
 ];
 
 export const AERONAVE_TIPO_CHOICES = [
+  ['Veículo lançador', 'Veículo lançador'],
+  ['Veículo suborbital', 'Veículo suborbital'],
   ['Satélite', 'Satélite'],
-  ['Estágio de foguete', 'Estágio de foguete'],
-  ['Cápsula', 'Cápsula'],
-  ['Sonda', 'Sonda'],
 ];
 
 export const TRIPULANTE_FUNCAO_CHOICES = [

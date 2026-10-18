@@ -17,7 +17,7 @@ const CATEGORIA_NORMA_CHOICES = [
 
 const FIELDS: FieldConfig[] = [
   { name: 'titulo', label: 'Título', type: 'text', required: true },
-  { name: 'categoria', label: 'Categoria', type: 'select', choices: CATEGORIA_NORMA_CHOICES, required: true },
+  { name: 'categoria', label: 'Categoria', type: 'select', choices: CATEGORIA_NORMA_CHOICES },
   { name: 'tipo_documento', label: 'Tipo de Documento', type: 'select', choices: MATERIAL_TIPO_DOCUMENTO_CHOICES, required: true },
   { name: 'numero_norma', label: 'Número', type: 'text' },
   { name: 'divisao_responsavel', label: 'Divisão Responsável', type: 'text' },
@@ -43,6 +43,7 @@ export default function EditarNormaPage() {
   return (
     <ResourceFormPage
       apiPath="/api/material-apoio/materiais/"
+      auditContentType="material_apoio.materialapoio"
       id={id}
       title="Editar Norma/Legislação"
       fields={FIELDS}

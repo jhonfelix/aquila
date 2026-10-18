@@ -1,4 +1,5 @@
 import django_filters
+from django.db.models import Q
 from rest_framework import viewsets
 
 from material_apoio.models import InvestigacaoOutrasAutoridades, MaterialApoio
@@ -14,11 +15,19 @@ class MaterialApoioFilterSet(django_filters.FilterSet):
     # A tela "Normas e Legislação" cobre várias categorias de uma vez
     # (NORMA, LEGISLACAO, REGULAMENTO, ...); ?categoria=NORMA,LEGISLACAO
     # faz o mesmo papel do filtro dos proxy models do Admin.
-    categoria = CategoriaInFilter(field_name='categoria')
+    # categoria é opcional; o valor especial SEM_CATEGORIA inclui os registros
+    # sem categoria (a tela de Normas usa isso para não "perder" cadastros).
+    categoria = CategoriaInFilter(method='filter_categoria')
 
     class Meta:
         model = MaterialApoio
         fields = ['categoria', 'tipo_documento']
+
+    def filter_categoria(self, queryset, name, value):
+        q = Q(categoria__in=[v for v in value if v != 'SEM_CATEGORIA'])
+        if 'SEM_CATEGORIA' in value:
+            q |= Q(categoria__isnull=True) | Q(categoria='')
+        return queryset.filter(q)
 
 
 class MaterialApoioViewSet(viewsets.ModelViewSet):
