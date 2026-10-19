@@ -5,6 +5,8 @@ import { formatShortDate } from '@/lib/format';
 import FileLink from '@/components/FileLink';
 import type { InvestigacaoOutrasAutoridades } from '@/lib/types';
 
+// Mesma estrutura de Normas e Legislação: poucas colunas de identificação,
+// ícone do anexo e botão Editar. Veículo, tipo e fase seguem no formulário.
 export default function OutrasAutoridadesListPage() {
   return (
     <ResourceListPage
@@ -22,17 +24,6 @@ export default function OutrasAutoridadesListPage() {
           key: 'numero_relatorio',
           label: 'Número do Relatório',
           render: (item: InvestigacaoOutrasAutoridades) => item.numero_relatorio || '-',
-        },
-        { key: 'veiculo', label: 'Veículo', render: (item: InvestigacaoOutrasAutoridades) => item.veiculo || '-' },
-        {
-          key: 'tipo_ocorrencia',
-          label: 'Tipo de Ocorrência',
-          render: (item: InvestigacaoOutrasAutoridades) => item.tipo_ocorrencia_display || '-',
-        },
-        {
-          key: 'fase_voo',
-          label: 'Fase do Voo',
-          render: (item: InvestigacaoOutrasAutoridades) => item.fase_voo_display || '-',
         },
         {
           key: 'data_ocorrencia',

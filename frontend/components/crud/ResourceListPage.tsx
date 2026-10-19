@@ -111,7 +111,7 @@ export default function ResourceListPage({
         )}
 
         {!loading && data && (
-          <div className="overflow-hidden rounded-xl border border-mist-200 bg-white shadow-card dark:border-space-700 dark:bg-space-900">
+          <div className="overflow-x-auto rounded-xl border border-mist-200 bg-white shadow-card dark:border-space-700 dark:bg-space-900">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-mist-200 bg-mist-100/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-space-700 dark:bg-space-800/40 dark:text-slate-400">
