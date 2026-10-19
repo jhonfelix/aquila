@@ -261,7 +261,7 @@ export const REVISAO_SETOR_CHOICES = [
   ['JEDI', 'JEDI'],
   ['REVISAO_GRAMATICAL', 'Revisão Gramatical'],
   ['REVISAO_FINAL', 'Revisão Final'],
-  ['APRECIACAO_CHEFE_DIP', 'Apreciação Chefe DIP'],
+  ['APRECIACAO_CHEFE_DIP', 'Apreciação Chefe DESP'],
   ['APRECIACAO_CHEFE_DO_CENIPA', 'Apreciação Chefe do CENIPA'],
   ['CONTROLE_IMPRESSAO', 'Controle/Impressão'],
   ['TRADUCAO', 'Tradução'],
