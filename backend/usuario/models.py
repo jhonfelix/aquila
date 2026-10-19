@@ -6,35 +6,36 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 POSTO_GRADUACAO_CHOICES = [
 
     ('MB', 'Major-Brigadeiro'),
-    ('BR', 'Brigadeiro'),
+    ('BR', 'Brig Ar'),
     # Oficiais superiores
-    ('CEL', 'Coronel'),
-    ('TC', 'Tenente-Coronel'),
-    ('MAJ', 'Major'),
+    ('CEL', 'Cel'),
+    ('CEL R1', 'Cel R1'),
+    ('TC', 'Ten Cel'),
+    ('TC R1', 'Ten Cel R1'),
+    ('MAJ', 'Maj'),
+    ('MAJ R1', 'Maj R1'),
     # Oficiais intermediários e subalternos
-    ('CAP', 'Capitão'),
-    ('1T', '1º Tenente'),
-    ('2T', '2º Tenente'),
-    ('ASP', 'Aspirante a Oficial'),
+    ('CAP', 'Cap'),
+    ('CAP R1', 'Cap R1'),
+    ('1T', '1º Ten'),
+    ('2T', '2º Ten'),
+    ('ASP', 'Asp'),
     # Graduados (praças)
-    ('SO', 'Suboficial'),
-    ('1S', '1º Sargento'),
-    ('2S', '2º Sargento'),
-    ('3S', '3º Sargento'),
+    ('SO', 'SO'),
+    ('SO R1', 'SO R1'),
+    ('1S', '1º SGT'),
+    ('2S', '2º SGT'),
+    ('3S', '3º SGT'),
     ('CB', 'Cabo'),
     ('CV', 'CIVIL'),
 
 ]
 LOCAL_TRABALHO_CHOICES = [
     ('CENIPA', 'CENIPA'), 
-    ('SERIPA 1', 'SERIPA 1'),
-    ('SERIPA 2', 'SERIPA 2'),
-    ('SERIPA 3', 'SERIPA 3'),
-    ('SERIPA 4', 'SERIPA 4'),
-    ('SERIPA 5', 'SERIPA 5'),
-    ('SERIPA 6', 'SERIPA 6'),
-    ('SERIPA 7', 'SERIPA 7'),
     ('DCTA', 'DCTA'),
+    ('CLBI', 'CLBI'),
+    ('COPE', 'COPE'),
+    ('CLA', 'CLA'),
 ]
 
 LABELS_SCHEMA = {
