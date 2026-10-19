@@ -242,13 +242,13 @@ export const ASOACI_REP_ACRED_CHOICES = [
 ];
 
 export const RELATORIO_ELOS_CHOICES = [
-  ['ANAC', 'ANAC'],
+  /*['ANAC', 'ANAC'],
   ['DECEA', 'DECEA'],
   ['RepAcred', 'RepAcred'],
   ['ICAO', 'ICAO'],
   ['ANAC,DECEA', 'ANAC e DECEA'],
   ['ANAC,DECEA,RepAcred', 'ANAC, DECEA e RepAcred'],
-  ['ANAC,DECEA,RepAcred,ICAO', 'ANAC, DECEA, RepAcred e ICAO'],
+  ['ANAC,DECEA,RepAcred,ICAO', 'ANAC, DECEA, RepAcred e ICAO'],*/
   ['TODOS', 'Todos'],
 ];
 
@@ -375,31 +375,32 @@ export const INVESTIGACAO_FASE_VOO_CHOICES = [
 // Espelha usuario/models.py
 export const POSTO_GRADUACAO_CHOICES = [
   ['MB', 'Major-Brigadeiro'],
-  ['BR', 'Brigadeiro'],
-  ['CEL', 'Coronel'],
-  ['TC', 'Tenente-Coronel'],
-  ['MAJ', 'Major'],
-  ['CAP', 'Capitão'],
-  ['1T', '1º Tenente'],
-  ['2T', '2º Tenente'],
-  ['ASP', 'Aspirante a Oficial'],
-  ['SO', 'Suboficial'],
-  ['1S', '1º Sargento'],
-  ['2S', '2º Sargento'],
-  ['3S', '3º Sargento'],
+  ['BR', 'Brig Ar'],
+  ['CEL', 'CEL'],
+  ['CEL R1', 'CEL R1'],
+  ['TC', 'Ten Cel '],
+  ['TC R1', 'Ten Cel R1'],
+  ['MAJ', 'Maj'],
+  ['MAJ R1', 'Maj R1'],
+  ['CAP', 'Cap'],
+  ['CAP R1', 'Cap R1'],
+  ['1T', '1º Ten'],
+  ['2T', '2º Ten'],
+  ['ASP', 'Asp'],
+  ['SO', 'SO'],
+  ['SO R1', 'SO R1'],
+  ['1S', '1º SGT'],
+  ['2S', '2º SGT'],
+  ['3S', '3º SGT'],
   ['CB', 'Cabo'],
   ['CV', 'CIVIL'],
 ];
 
 export const LOCAL_TRABALHO_CHOICES = [
   ['CENIPA', 'CENIPA'],
-  ['SERIPA 1', 'SERIPA 1'],
-  ['SERIPA 2', 'SERIPA 2'],
-  ['SERIPA 3', 'SERIPA 3'],
-  ['SERIPA 4', 'SERIPA 4'],
-  ['SERIPA 5', 'SERIPA 5'],
-  ['SERIPA 6', 'SERIPA 6'],
-  ['SERIPA 7', 'SERIPA 7'],
+  ['CLA', 'CLA'],
+  ['COPE', 'COPE'],
+  ['CLBI', 'CLBI'],
   ['DCTA', 'DCTA'],
 ];
 
