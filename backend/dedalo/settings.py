@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'ocorrencia',
     'labdata',
     'material_apoio',
+    'assistente',
     'mensagem',
     'taxonomia',
     'api',
@@ -472,3 +473,11 @@ def environment_callback(request):
 
 # help na hora que o bicho pega: usar para reiniciar os migrates usar o --fake
 # py manage.py migrate --fake-initial 
+
+# Assistente IA (CCABR, modelo gpt-oss-120b)
+CCABR_BASE_URL = os.environ.get('CCABR_BASE_URL', 'https://ia.ccabr.intraer')
+CCABR_API_KEY = os.environ.get('CCABR_API_KEY', '')
+CCABR_TIMEOUT = float(os.environ.get('CCABR_TIMEOUT', 90))
+# TLS ligado por padrão; CA corporativa -> CCABR_CA_BUNDLE=/caminho/ca.pem
+CCABR_VERIFY_SSL = os.environ.get('CCABR_VERIFY_SSL', 'True') == 'True'
+CCABR_CA_BUNDLE = os.environ.get('CCABR_CA_BUNDLE', '')

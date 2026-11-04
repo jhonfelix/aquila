@@ -31,4 +31,4 @@ RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 EXPOSE 8000
 
 ENTRYPOINT ["/bin/sh", "entrypoint.sh"]
-CMD ["gunicorn", "dedalo.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--log-level", "debug", "--capture-output", "--enable-stdio-inheritance"]
+CMD ["gunicorn", "dedalo.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--worker-class", "gthread", "--threads", "4", "--timeout", "120", "--log-level", "debug", "--capture-output", "--enable-stdio-inheritance"]

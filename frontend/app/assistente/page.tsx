@@ -4,34 +4,95 @@ import { useEffect, useRef, useState } from 'react';
 import { Bot, Send, Sparkles } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { cn } from '@/lib/cn';
-import { fetchMe, type Me } from '@/lib/api';
+import { ApiError, apiFetch, fetchMe, type Me } from '@/lib/api';
+
+type Tabela = {
+  titulo: string;
+  colunas: string[];
+  linhas: (string | number | boolean | null)[][];
+  truncado?: boolean;
+};
+
+type Ficha = { titulo: string; situacao: string; paragrafo: string };
 
 type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  fichas?: Ficha[];
+  tabelas?: Tabela[];
+  erro?: boolean;
 };
+
+type ChatResponse = { resposta: string; fichas: Ficha[]; tabelas: Tabela[]; ferramentas: string[] };
 
 const SUGESTOES = [
   'Quais ocorrências estão aguardando autenticação?',
-  'Explique o fluxo Redigir → Confirmar → Autenticar',
-  'Como cadastro uma nova ocorrência?',
+  'Quais ocorrências estão em revisão, em qual fase e por quem?',
 ];
 
-// Protótipo visual: sem backend real por trás ainda, só respostas
-// pré-definidas por palavra-chave pra dar uma ideia de uso real.
-function respostaSimulada(pergunta: string): string {
-  const q = pergunta.toLowerCase();
-  if (q.includes('autentic')) {
-    return 'No fluxo atual, uma ocorrência confirmada aparece em Redigir/Autenticar → Autenticar. Autenticar grava o número de processo definitivo e trava o registro contra novas edições.';
-  }
-  if (q.includes('confirm')) {
-    return 'Confirmar é o segundo estágio do fluxo: valida os dados redigidos antes da autenticação final. Só depois de confirmada a ocorrência pode ser autenticada.';
-  }
-  if (q.includes('cadastr') || q.includes('nova ocorrência') || q.includes('redigir')) {
-    return 'Para abrir uma ocorrência, use Redigir/Autenticar → Redigir na barra lateral. O registro começa em rascunho e segue para Confirmar e depois Autenticar.';
-  }
-  return 'Ainda não tenho acesso aos dados reais de ocorrências — esta é uma prévia visual do Assistente IA. Quando conectado, vou poder consultar o status de processos, resumir relatórios e apontar pendências direto por aqui.';
+function Celula({ v }: { v: string | number | boolean | null }) {
+  if (v === null || v === '') return <span className="text-slate-400">—</span>;
+  if (typeof v === 'boolean') return <>{v ? 'Sim' : 'Não'}</>;
+  return <>{String(v)}</>;
+}
+
+function FichaOcorrencia({ f }: { f: Ficha }) {
+  return (
+    <div className="mt-3 rounded-lg border border-mist-200 bg-mist-50/60 p-4 dark:border-space-700 dark:bg-space-800/40">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{f.titulo}</h3>
+        {f.situacao && (
+          <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-medium text-accent-700 dark:bg-accent-900/40 dark:text-accent-300">
+            {f.situacao}
+          </span>
+        )}
+      </div>
+      <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{f.paragrafo}</p>
+    </div>
+  );
+}
+
+function TabelaDados({ t }: { t: Tabela }) {
+  return (
+    <div className="mt-3 overflow-hidden rounded-lg border border-mist-200 dark:border-space-700">
+      <div className="flex items-center justify-between border-b border-mist-200 bg-mist-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-space-700 dark:bg-space-800 dark:text-slate-300">
+        <span>{t.titulo}</span>
+        <span className="font-normal text-slate-500 dark:text-slate-400">
+          {t.linhas.length} {t.linhas.length === 1 ? 'registro' : 'registros'}
+          {t.truncado ? ' (lista parcial)' : ''}
+        </span>
+      </div>
+      {t.linhas.length === 0 ? (
+        <p className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">Nenhum registro encontrado.</p>
+      ) : (
+        <div className="max-h-80 overflow-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="sticky top-0 bg-white dark:bg-space-900">
+              <tr>
+                {t.colunas.map((c) => (
+                  <th key={c} className="whitespace-nowrap border-b border-mist-200 px-3 py-2 font-semibold text-slate-600 dark:border-space-700 dark:text-slate-300">
+                    {c}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {t.linhas.map((l, i) => (
+                <tr key={i} className="odd:bg-mist-50/50 dark:odd:bg-space-800/40">
+                  {l.map((v, j) => (
+                    <td key={j} className="px-3 py-2 align-top text-slate-700 dark:text-slate-200">
+                      <Celula v={v} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AssistenteIAPage() {
@@ -49,16 +110,28 @@ export default function AssistenteIAPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, typing]);
 
-  function send(text: string) {
+  async function send(text: string) {
     const content = text.trim();
     if (!content || typing) return;
+    const historico = messages.filter((m) => !m.erro).map((m) => ({ role: m.role, content: m.content }));
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content }]);
     setInput('');
     setTyping(true);
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: respostaSimulada(content) }]);
+    try {
+      const r = await apiFetch<ChatResponse>('/api/assistente/chat/', {
+        method: 'POST',
+        body: JSON.stringify({ pergunta: content, historico }),
+      });
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: 'assistant', content: r.resposta, fichas: r.fichas, tabelas: r.tabelas },
+      ]);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Não consegui falar com o servidor.';
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg, erro: true }]);
+    } finally {
       setTyping(false);
-    }, 900);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -66,16 +139,9 @@ export default function AssistenteIAPage() {
     send(input);
   }
 
-  const avisoPrototipo = (
-    <div className="flex items-center justify-center gap-2 rounded-lg border border-accent-200 bg-accent-50 px-3 py-2 text-xs text-accent-700 dark:border-accent-900/50 dark:bg-accent-900/20 dark:text-accent-300">
-      <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-      Protótipo — respostas simuladas, ainda não conectado aos dados reais de ocorrências.
-    </div>
-  );
-
   return (
     <AppShell title="Assistente IA">
-      <div className="mx-auto flex h-[calc(100vh-56px)] w-full max-w-3xl flex-col px-6 py-6">
+      <div className="mx-auto flex h-[calc(100vh-56px)] w-full flex-col px-6 py-6">
         {messages.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300">
@@ -84,7 +150,7 @@ export default function AssistenteIAPage() {
             <div>
               <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Assistente IA</h1>
               <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500 dark:text-slate-400">
-                Pergunte sobre o andamento de uma ocorrência, o fluxo de trabalho ou onde encontrar algo no sistema.
+                Consulte o andamento das ocorrências: status, fase de revisão, responsáveis e demais dados cadastrados.
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -99,11 +165,9 @@ export default function AssistenteIAPage() {
                 </button>
               ))}
             </div>
-            <div className="w-full max-w-sm">{avisoPrototipo}</div>
           </div>
         ) : (
           <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto pr-1">
-            {avisoPrototipo}
             {messages.map((m) => (
               <div key={m.id} className={cn('flex items-start gap-3', m.role === 'user' && 'flex-row-reverse')}>
                 <span
@@ -122,13 +186,15 @@ export default function AssistenteIAPage() {
                 </span>
                 <div
                   className={cn(
-                    'max-w-[75%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
+                    'min-w-0 max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
                     m.role === 'user'
                       ? 'bg-accent-600 text-white'
                       : 'border border-mist-200 bg-white text-slate-800 dark:border-space-700 dark:bg-space-900 dark:text-slate-200',
                   )}
                 >
                   {m.content}
+                  {m.fichas?.map((f, i) => <FichaOcorrencia key={`f${i}`} f={f} />)}
+                  {m.tabelas?.map((t, i) => <TabelaDados key={i} t={t} />)}
                 </div>
               </div>
             ))}
