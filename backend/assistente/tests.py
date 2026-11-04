@@ -265,8 +265,118 @@ class FiltrosInvestigacaoETravaTest(TestCase):
         self.assertEqual(validar_resposta(t, 'A conclusão está prevista para 2027.'), NAO_CONFIAVEL)
 
     def test_schema_das_ferramentas_expoe_as_opcoes_dos_filtros(self):
-        from agno.tools.function import Function
-        props = Function.from_callable(Assistente(self.autor).fichas_ocorrencias).parameters['properties']
-        texto = json.dumps(props)
+        from .agent import definicoes_ferramentas
+        tools, _ = definicoes_ferramentas(Assistente(self.autor))
+        fichas = next(t for t in tools if t['function']['name'] == 'fichas_ocorrencias')
+        texto = json.dumps(fichas['function']['parameters'], ensure_ascii=False)
+        self.assertNotIn('"type": "object", "properties": {}', texto)   # o bug do `Any`
         for opcao in ['INVESTIGADA', 'COLETA DE DADOS', 'CENIPA', 'OUTRO', 'ATIVA', 'FINALIZADA', 'RAI', 'AUTENTICAR']:
             self.assertIn(opcao, texto)
+
+
+class FiltrosLocalPeriodoTest(TestCase):
+    setUpTestData = FerramentasTest.__dict__['setUpTestData']
+    _oc = FerramentasTest._oc
+
+    def test_filtra_por_organizacao_local_classificacao_e_periodo(self):
+        a = self._oc('AUTENTICADO', 'P-CLA')           # dia 02/01/2026, Alcântara, ACIDENTE
+        a.aerodromo, a.local = 'CLA', 'Centro de Lançamento de Alcântara (CLA)'
+        a.save()
+        b = self._oc('AUTENTICADO', 'P-COPE')
+        b.aerodromo, b.classificacao, b.dia = 'COPE', 'INCIDENTE', date(2020, 5, 1)
+        b.save()
+
+        t = Assistente(self.autor)
+        t.fichas_ocorrencias(organizacao='CLA')
+        self.assertEqual([f['titulo'] for f in t.fichas], ['Processo P-CLA'])
+        self.assertEqual(t.aberturas, ['Encontrei 1 ocorrência registrada no Centro de Lançamento de Alcântara (CLA):'])
+
+        t = Assistente(self.autor)
+        t.fichas_ocorrencias(local='alcântara')
+        self.assertEqual(len(t.fichas), 2)             # local e município de ambas contêm "Alcântara"
+
+        t = Assistente(self.autor)
+        t.fichas_ocorrencias(classificacao='INCIDENTE', data_inicio='2020-01-01', data_fim='2020-12-31')
+        self.assertEqual([f['titulo'] for f in t.fichas], ['Processo P-COPE'])
+        self.assertEqual(t.aberturas,
+                         ['Encontrei 1 ocorrência classificada como incidente entre 01/01/2020 e 31/12/2020:'])
+
+        r = json.loads(Assistente(self.autor).fichas_ocorrencias(data_inicio='01/2020'))
+        self.assertIn('Data inválida', r['erro'])
+
+
+# ---------------------------------------------------------------- loop próprio
+class _Chamada:
+    def __init__(self, id_, nome, args):
+        self.id = id_
+        self.function = type('F', (), {'name': nome, 'arguments': args})()
+
+
+class _ClienteFalso:
+    """Imita client.chat.completions.create devolvendo respostas roteirizadas."""
+
+    def __init__(self, roteiro):
+        self.roteiro, self.pedidos = list(roteiro), []
+        self.chat = type('C', (), {'completions': self})()
+
+    def create(self, **kw):
+        self.pedidos.append(kw)
+        conteudo, chamadas = self.roteiro.pop(0) if self.roteiro else ('fim', None)
+        msg = type('M', (), {'content': conteudo, 'tool_calls': chamadas})()
+        return type('R', (), {'choices': [type('Ch', (), {'message': msg})()]})()
+
+
+class LoopProprioTest(TestCase):
+    setUpTestData = FerramentasTest.__dict__['setUpTestData']
+    _oc = FerramentasTest._oc
+
+    def test_fluxo_ferramenta_e_resposta(self):
+        from .agent import perguntar
+        self._oc('AUTENTICAR', 'P-L1')
+        cli = _ClienteFalso([
+            (None, [_Chamada('c1', 'aguardando_autenticacao', '{}')]),
+            ('Encontrei 1 ocorrência.', None),
+        ])
+        t = Assistente(self.autor)
+        r = perguntar(t, 'quais aguardam autenticação?', cliente=cli)
+        self.assertEqual(r, 'Encontrei 1 ocorrência aguardando autenticação:')   # abertura do código
+        self.assertEqual(t.ferramentas_usadas, ['aguardando_autenticacao'])
+        # o resultado da ferramenta voltou ao modelo, ligado ao id da chamada
+        tool_msgs = [m for m in cli.pedidos[1]['messages'] if m['role'] == 'tool']
+        self.assertEqual(tool_msgs[0]['tool_call_id'], 'c1')
+        self.assertEqual(cli.pedidos[0]['model'], 'gpt-oss-120b')
+
+    def test_normaliza_nome_harmony_e_rejeita_argumento_invalido(self):
+        from .agent import perguntar
+        a = self._oc('AUTENTICADO', 'P-L2')
+        OcorrenciaControle.objects.create(ocorrencia=a, status='INVESTIGADA', orgao_investigador='CENIPA')
+        cli = _ClienteFalso([
+            (None, [_Chamada('c1', 'fichas_ocorrencias', '{"orgao_investigador": "FAB"}')]),   # fora do enum
+            (None, [_Chamada('c2', 'functions.fichas_ocorrencias<|channel|>commentary',
+                             '{"orgao_investigador": "CENIPA"}')]),
+            ('ok', None),
+        ])
+        t = Assistente(self.autor)
+        r = perguntar(t, 'investigadas pelo CENIPA?', cliente=cli)
+        erro = [m for m in cli.pedidos[1]['messages'] if m['role'] == 'tool'][0]['content']
+        self.assertIn('Argumentos inválidos', erro)
+        self.assertEqual(r, 'Encontrei 1 ocorrência investigada pelo CENIPA:')
+        self.assertEqual([f['titulo'] for f in t.fichas], ['Processo P-L2'])
+
+    def test_limite_de_passos_forca_resposta_sem_ferramentas(self):
+        from .agent import MAX_TOOL_STEPS, SEM_DADOS, perguntar
+        loop = [(None, [_Chamada(f'c{i}', 'descrever_dados', '{}')]) for i in range(MAX_TOOL_STEPS)]
+        cli = _ClienteFalso(loop + [('Encontrei 6 ocorrências.', None)])
+        r = perguntar(Assistente(self.autor), 'qualquer coisa', cliente=cli)
+        self.assertEqual(len(cli.pedidos), MAX_TOOL_STEPS + 1)
+        self.assertEqual(cli.pedidos[-1]['tool_choice'], 'none')
+        self.assertEqual(r, SEM_DADOS)          # só metadados -> texto do modelo descartado
+
+    def test_falha_de_rede_vira_excecao(self):
+        from .agent import perguntar
+
+        class Quebrado(_ClienteFalso):
+            def create(self, **kw):
+                raise ConnectionError('VPN fora')
+        with self.assertRaises(ConnectionError):
+            perguntar(Assistente(self.autor), 'x', cliente=Quebrado([]))

@@ -446,8 +446,13 @@ def _paragrafo_ocorrencia(o, extras: list[str] | None = None, controle: bool = F
     return ' '.join(f for f in frases if f)
 
 
+_ORGANIZACAO_NOME = {'CLA': 'Centro de Lançamento de Alcântara (CLA)',
+                     'CLBI': 'Centro de Lançamento da Barreira do Inferno (CLBI)',
+                     'COPE': 'Centro de Operações Espaciais (COPE)'}
+
+
 def _abertura_fichas(total: int, exibidas: int, numero: str | None, status: str | None,
-                     controle: dict[str, str]) -> str:
+                     controle: dict[str, str], geral: dict | None = None) -> str:
     """Frase de abertura 100% derivada dos filtros aplicados e da contagem real."""
     if numero:
         return (f"Esta é a ocorrência de processo {numero}:" if total
@@ -473,6 +478,23 @@ def _abertura_fichas(total: int, exibidas: int, numero: str | None, status: str 
     if status:
         desc.append({'AUTENTICAR': 'aguardando autenticação', 'CONFIRMAR': 'aguardando confirmação',
                      'AUTENTICADO': flex('autenticada', 'autenticadas')}.get(status, f"com status {status}"))
+    geral = geral or {}
+    if geral.get('classificacao'):
+        desc.insert(0, flex('classificada', 'classificadas') + f" como {geral['classificacao'].lower()}")
+    onde = []
+    if geral.get('organizacao'):
+        onde.append(f"no {_ORGANIZACAO_NOME[geral['organizacao']]}")
+    if geral.get('local'):
+        onde.append(f"em locais com “{geral['local']}”" if onde else f"em “{geral['local']}”")
+    if onde:
+        desc.insert(0, flex('registrada', 'registradas') + ' ' + ' e '.join(onde))
+    ini, fim = geral.get('data_inicio'), geral.get('data_fim')
+    if ini and fim:
+        desc.append(f"entre {_data_br(ini)} e {_data_br(fim)}")
+    elif ini:
+        desc.append(f"a partir de {_data_br(ini)}")
+    elif fim:
+        desc.append(f"até {_data_br(fim)}")
     d = (' ' + ' '.join(desc)) if desc else (' ' + flex('cadastrada', 'cadastradas'))
     if total == 0:
         return f"Não encontrei ocorrências{d.replace('investigada ', 'investigadas ').replace('tratada ', 'tratadas ')}."
@@ -523,6 +545,11 @@ class Assistente:
         orgao_investigador: Optional[Literal['CENIPA', 'OUTRO']] = None,
         situacao_investigacao: Optional[Literal['ATIVA', 'FINALIZADA']] = None,
         fase_investigacao: Optional[Literal['RAI', 'MIN', 'REV', 'RF', 'FIM']] = None,
+        organizacao: Optional[Literal['CLA', 'CLBI', 'COPE']] = None,
+        local: Optional[str] = None,
+        classificacao: Optional[Literal['ACIDENTE', 'INCIDENTE', 'INFORTÚNIO']] = None,
+        data_inicio: Optional[str] = None,
+        data_fim: Optional[str] = None,
         limite: int = 20,
     ) -> str:
         """Apresenta ocorrências como fichas legíveis (data, hora, local, artefato, histórico e investigação).
@@ -535,6 +562,13 @@ class Assistente:
         - orgao_investigador: CENIPA ou OUTRO
         - situacao_investigacao: ATIVA ou FINALIZADA
         - fase_investigacao: RAI, MIN (minuta), REV (revisão), RF (relatório final) ou FIM
+        - organizacao: organização do segmento espacial responsável — CLA (Centro de Lançamento de
+          Alcântara), CLBI (Centro de Lançamento da Barreira do Inferno) ou COPE (Centro de Operações
+          Espaciais). Use para perguntas como "ocorrências no/do CLA".
+        - local: texto livre buscado no local, no local de impacto e no município (ex.: "Alcântara")
+        - classificacao: ACIDENTE, INCIDENTE ou INFORTÚNIO
+        - data_inicio / data_fim: período da ocorrência, formato AAAA-MM-DD (ex.: ano de 2020 ->
+          data_inicio=2020-01-01 e data_fim=2020-12-31)
         """
         def run():
             self._exigir_view(OcorrenciaGeral)
@@ -553,6 +587,24 @@ class Assistente:
                 qs = qs.filter(status=txt(status).upper())
             if txt(numero_processo):
                 qs = qs.filter(numero_processo=txt(numero_processo))
+            geral = {}
+            if txt(organizacao):
+                geral['organizacao'] = txt(organizacao).upper()
+                qs = qs.filter(aerodromo=geral['organizacao'])
+            if txt(local):
+                geral['local'] = txt(local)
+                qs = qs.filter(Q(local__icontains=geral['local']) | Q(local_impacto__icontains=geral['local'])
+                               | Q(cidade__nome__icontains=geral['local']))
+            if txt(classificacao):
+                geral['classificacao'] = txt(classificacao).upper()
+                qs = qs.filter(classificacao=geral['classificacao'])
+            for chave, valor, lookup in (('data_inicio', data_inicio, 'dia__gte'), ('data_fim', data_fim, 'dia__lte')):
+                if txt(valor):
+                    try:
+                        geral[chave] = date.fromisoformat(txt(valor))
+                    except ValueError:
+                        raise ToolError(f"Data inválida em {chave}: '{valor}'. Use o formato AAAA-MM-DD.")
+                    qs = qs.filter(**{lookup: geral[chave]})
             if filtros_controle:
                 ids = OcorrenciaControle.objects.filter(
                     **{k: v.upper() for k, v in filtros_controle.items()}).values('ocorrencia_id')
@@ -564,7 +616,7 @@ class Assistente:
                 self._registrar_ficha(o)
             self.aberturas.append(_abertura_fichas(
                 total, len(objs), txt(numero_processo), txt(status),
-                {k: v.upper() for k, v in filtros_controle.items()}))
+                {k: v.upper() for k, v in filtros_controle.items()}, geral))
             return self._resposta('fichas_ocorrencias', {
                 'total_encontrado': total, 'exibidas': len(objs),
                 'nota': NOTA_FICHAS,

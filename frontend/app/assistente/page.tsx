@@ -27,8 +27,10 @@ type ChatMessage = {
 type ChatResponse = { resposta: string; fichas: Ficha[]; tabelas: Tabela[]; ferramentas: string[] };
 
 const SUGESTOES = [
-  'Quais ocorrências estão aguardando autenticação?',
-  'Quais ocorrências estão em revisão, em qual fase e por quem?',
+  'Apresente as ocorrências registradas no Centro de Lançamento de Alcântara (CLA)',
+  'Quais ocorrências aconteceram em Brasília?',
+  'Liste os incidentes de 2025',
+  'Quais acidentes ocorreram no COPE?',
 ];
 
 function Celula({ v }: { v: string | number | boolean | null }) {
@@ -39,7 +41,7 @@ function Celula({ v }: { v: string | number | boolean | null }) {
 
 function FichaOcorrencia({ f }: { f: Ficha }) {
   return (
-    <div className="mt-3 rounded-lg border border-mist-200 bg-mist-50/60 p-4 dark:border-space-700 dark:bg-space-800/40">
+    <div className="mt-2 rounded-xl border border-mist-200 bg-white px-4 py-3 dark:border-space-700 dark:bg-space-900">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{f.titulo}</h3>
         {f.situacao && (
@@ -153,7 +155,7 @@ export default function AssistenteIAPage() {
                 Consulte o andamento das ocorrências: status, fase de revisão, responsáveis e demais dados cadastrados.
               </p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="grid w-full gap-2 sm:grid-cols-2">
               {SUGESTOES.map((s) => (
                 <button
                   key={s}
@@ -169,7 +171,8 @@ export default function AssistenteIAPage() {
         ) : (
           <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto pr-1">
             {messages.map((m) => (
-              <div key={m.id} className={cn('flex items-start gap-3', m.role === 'user' && 'flex-row-reverse')}>
+              <div key={m.id}>
+              <div className={cn('flex items-start gap-3', m.role === 'user' && 'flex-row-reverse')}>
                 <span
                   className={cn(
                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold',
@@ -186,16 +189,21 @@ export default function AssistenteIAPage() {
                 </span>
                 <div
                   className={cn(
-                    'min-w-0 max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
+                    'max-w-[75%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
                     m.role === 'user'
                       ? 'bg-accent-600 text-white'
                       : 'border border-mist-200 bg-white text-slate-800 dark:border-space-700 dark:bg-space-900 dark:text-slate-200',
                   )}
                 >
                   {m.content}
+                </div>
+              </div>
+              {(m.fichas?.length || m.tabelas?.length) ? (
+                <div className="ml-11 mt-1">
                   {m.fichas?.map((f, i) => <FichaOcorrencia key={`f${i}`} f={f} />)}
                   {m.tabelas?.map((t, i) => <TabelaDados key={i} t={t} />)}
                 </div>
+              ) : null}
               </div>
             ))}
             {typing && (
