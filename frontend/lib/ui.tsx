@@ -10,7 +10,7 @@ export function Centered({ children }: { children: React.ReactNode }) {
 }
 
 export function PageContainer({ children, className, wide }: { children: React.ReactNode; className?: string; wide?: boolean }) {
-  return <div className={cn('mx-auto w-full px-6 py-8', wide ? 'max-w-5xl' : 'max-w-2xl', className)}>{children}</div>;
+  return <div className={cn('mx-auto w-full px-6 py-8', !wide && 'max-w-2xl', className)}>{children}</div>;
 }
 
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
