@@ -77,27 +77,37 @@ _CLIENTE = None
 
 def _verify():
     """True (padrão), caminho de um CA bundle, ou False se explicitamente configurado."""
-    if settings.CCABR_CA_BUNDLE:
-        return settings.CCABR_CA_BUNDLE
-    return settings.CCABR_VERIFY_SSL
+    import os
+    ca_bundle = os.environ.get('CCABR_CA_BUNDLE', '')
+    if ca_bundle:
+        return ca_bundle
+    verify_ssl = os.environ.get('CCABR_VERIFY_SSL', 'True')
+    return verify_ssl != 'False'
 
 
 def _cliente():
     """Cliente OpenAI-compatível da CCABR (reutilizado entre requisições)."""
     global _CLIENTE
     if _CLIENTE is None:
-        if not settings.CCABR_API_KEY:
-            raise AssistenteNaoConfigurado('CCABR_API_KEY não configurada.')
+        import os
+
         import httpx
         from openai import OpenAI
+
+        api_key = os.environ.get('CCABR_API_KEY', '')
+        base_url = os.environ.get('CCABR_BASE_URL', 'https://ia.ccabr.intraer')
+
+        if not api_key:
+            raise AssistenteNaoConfigurado('CCABR_API_KEY não configurada.')
 
         # Conexão falha rápido (VPN fora do ar) e a leitura respeita o tempo de geração do
         # modelo; com 2 retries o pior caso ainda cabe nos 120s do nginx/gunicorn.
         _CLIENTE = OpenAI(
-            api_key=settings.CCABR_API_KEY,
-            base_url=f"{settings.CCABR_BASE_URL.rstrip('/')}/v1",
+            api_key=api_key,
+            base_url=f"{base_url.rstrip('/')}/v1",
             max_retries=2,
             http_client=httpx.Client(verify=_verify(),
+                                     proxy=None,
                                      timeout=httpx.Timeout(settings.CCABR_TIMEOUT, connect=8.0)),
         )
     return _CLIENTE
