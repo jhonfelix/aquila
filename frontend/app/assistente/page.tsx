@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Bot, Send, Sparkles } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { cn } from '@/lib/cn';
-import { ApiError, apiFetch, fetchMe, type Me } from '@/lib/api';
+import { ApiError, apiFetch, primeCsrf, fetchMe, type Me } from '@/lib/api';
 
 type Tabela = {
   titulo: string;
@@ -25,6 +25,10 @@ type ChatMessage = {
 };
 
 type ChatResponse = { resposta: string; fichas: Ficha[]; tabelas: Tabela[]; ferramentas: string[] };
+
+function uid(): string {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 const SUGESTOES = [
   'Apresente as ocorrências registradas no Centro de Lançamento de Alcântara (CLA)',
@@ -116,21 +120,22 @@ export default function AssistenteIAPage() {
     const content = text.trim();
     if (!content || typing) return;
     const historico = messages.filter((m) => !m.erro).map((m) => ({ role: m.role, content: m.content }));
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content }]);
+    setMessages((prev) => [...prev, { id: uid(), role: 'user', content }]);
     setInput('');
     setTyping(true);
     try {
+      await primeCsrf();
       const r = await apiFetch<ChatResponse>('/api/assistente/chat/', {
         method: 'POST',
         body: JSON.stringify({ pergunta: content, historico }),
       });
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: r.resposta, fichas: r.fichas, tabelas: r.tabelas },
+        { id: uid(), role: 'assistant', content: r.resposta, fichas: r.fichas, tabelas: r.tabelas },
       ]);
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : 'Não consegui falar com o servidor.';
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: msg, erro: true }]);
+      setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: msg, erro: true }]);
     } finally {
       setTyping(false);
     }
